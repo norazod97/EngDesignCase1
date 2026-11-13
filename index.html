@@ -1,91 +1,17 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#101a24" />
-    <meta
-      name="description"
-      content="COROB multi-robot welding cell operator interface — simulation only."
-    />
+    <meta name="description" content="COROB multi-robot welding cell operator interface — simulation only." />
     <title>Operator sign in · COROB Weld Cell</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="styles.css" />
-    <script src="app.js" defer></script>
   </head>
   <body>
-    <div class="app-shell">
-      <header class="topbar">
-        <a class="brand" href="#" aria-label="COROB Weld Cell home">
-          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span class="brand-copy"><strong>COROB</strong><span>WELD CELL</span></span>
-        </a>
-        <div class="topbar-meta">
-          <span class="status-dot" aria-hidden="true"></span>
-          <span>OPERATOR INTERFACE</span>
-          <span class="meta-divider" aria-hidden="true"></span>
-          <span class="simulation-label">SIMULATION</span>
-        </div>
-      </header>
-
-      <main id="main-content">
-        <section class="login-layout" id="login-view" aria-labelledby="login-title">
-          <div class="intro-panel">
-            <div class="eyebrow"><span class="eyebrow-line"></span> SHOP FLOOR · CELL 01</div>
-            <h1>Precision in<br /><span>every pass.</span></h1>
-            <p class="intro-copy">Operator access for the multi-robot gas metal arc welding cell. Sign in to continue to your workspace.</p>
-            <div class="weld-graphic" aria-hidden="true">
-              <div class="graphic-grid"></div><div class="beam beam-one"></div><div class="beam beam-two"></div><div class="weld-core"></div>
-              <div class="graphic-caption"><span>GMAW</span><span>·</span><span>BUTT WELD</span></div>
-              <div class="graphic-coordinates">X 042.18&nbsp;&nbsp; Y 018.62&nbsp;&nbsp; Z 006.40</div>
-            </div>
-            <div class="cell-note"><span class="note-icon" aria-hidden="true">i</span> Interface preview · no machine connection</div>
-          </div>
-
-          <div class="form-panel">
-            <div class="form-heading">
-              <div class="form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.6"/><path d="M5 20c.7-3.1 3.2-5 7-5s6.3 1.9 7 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
-              <div><div class="eyebrow">OPERATOR ACCESS</div><h2 id="login-title">Operator sign in</h2></div>
-            </div>
-            <p class="form-description">Enter your assigned credentials to access the operator interface.</p>
-
-            <form id="login-form" novalidate>
-              <label for="username">Operator ID</label>
-              <div class="input-wrap">
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.6"/><path d="M5 20c.7-3.1 3.2-5 7-5s6.3 1.9 7 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                <input id="username" name="username" type="text" placeholder="Enter operator ID" autocomplete="username" required />
-              </div>
-              <label for="password">Password</label>
-              <div class="input-wrap">
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="11" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 14v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                <input id="password" name="password" type="password" placeholder="Enter password" autocomplete="current-password" required />
-              </div>
-              <p class="form-error" id="login-error" role="alert" aria-live="polite"></p>
-              <button class="sign-in-button" type="submit"><span>Sign in to workspace</span><svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            </form>
-
-            <div class="demo-note"><span class="demo-note-title">DEMO ACCESS</span><span>Use the mock credentials supplied with this simulation.</span></div>
-          </div>
-        </section>
-
-        <section class="welcome-view" id="welcome-view" aria-labelledby="welcome-title" hidden>
-          <div class="welcome-card">
-            <div class="welcome-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 12 4.5 4.5L19 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <div class="eyebrow"><span class="eyebrow-line"></span> OPERATOR WORKSPACE</div>
-            <h1 id="welcome-title">Welcome, <span id="operator-name"></span>.</h1>
-            <p class="welcome-copy">You are signed in to the COROB operator interface.</p>
-            <button class="sign-out-button" id="sign-out" type="button">Sign out <span aria-hidden="true">↗</span></button>
-          </div>
-        </section>
-      </main>
-
-      <footer class="footer">
-        <span>© COROB · OPERATOR HMI CONCEPT</span>
-        <span class="footer-warning"><span aria-hidden="true">!</span> SIMULATION ONLY — NOT CONNECTED TO ROBOT EQUIPMENT</span>
-        <span>BUILD 01.00 <span class="footer-divider">/</span> DEMO</span>
-      </footer>
-    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

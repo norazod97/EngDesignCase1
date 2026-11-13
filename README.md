@@ -4,7 +4,7 @@ A responsive, browser-based sign-in mockup for a multi-robot gas metal arc weldi
 
 ## Run locally
 
-Open `index.html` in a browser, or serve this folder with any static file server. No build step or dependencies are required.
+Install the Node.js dependencies with `npm install`, start the Vite development server with `npm run dev`, and open the local URL it prints. Run `npm run build` to create the production site in `dist/` or `npm run preview` to preview that build.
 
 ## Demo credentials
 
@@ -17,6 +17,6 @@ Successful sign-in is remembered in this browser until sign-out. The demo creden
 
 ## GitHub Pages
 
-The workflow in `.github/workflows/deploy-pages.yml` publishes the repository root to GitHub Pages on each push to `main` and on manual workflow dispatch. In the repository’s **Settings → Pages**, select **GitHub Actions** as the build and deployment source if it is not already selected.
+The workflow in `.github/workflows/deploy-pages.yml` builds the React/Vite app and publishes `dist/` to GitHub Pages on each push to `main` and on manual workflow dispatch. Vite uses the GitHub project-page base path in Actions builds.
 
 For `norazod97/EngDesignCase1`, the expected project URL is <https://norazod97.github.io/EngDesignCase1/> after the workflow completes. Availability for a private repository depends on the GitHub account’s current Pages plan and repository settings.

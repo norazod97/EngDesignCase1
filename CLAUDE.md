@@ -1,81 +1,34 @@
-# CLAUDE.md: standing instructions for this repo
+# CLAUDE.md
 
-## What this is
-**COROB Weld Cell HMI**: a browser-based operator interface for multi-robot welding cells. It is a **front-end prototype for a Wizard-of-Oz lab study**:
-- the cells, MES and AI services are simulated;
-- an experimenter drives events from the `#/wizard` console tab;
-- it never connects to or controls real equipment.
+**What this is:** a front-end prototype (React 19, JavaScript, Vite) for a Wizard-of-Oz lab study about welding-cell operators. The cells, AI and colleagues are simulated. The researcher drives events from the `#/wizard` tab. It is deployed as a static site on GitHub Pages. It never controls real equipment.
 
-It is deployed as a static site on GitHub Pages.
+**How to work with me**
+- I am not a programmer. Explain in plain words.
+- Do **one task** from `docs/PLAN.md` section 3 at a time. Read **only** this file, the task, and the files the task names. Ask me before reading more.
+- **Plan first:** list the files you will change, then wait for my OK.
+- Change at most ~3 files per task. Do not rewrite or "improve" anything the task does not ask for.
+- **Comment the code for a beginner.** I must understand every file I commit.
+  - At the top of each file: 1–3 lines saying what the file does and which MVC layer it belongs to.
+  - Above each function or component: what it does, what goes in, what comes out.
+  - Above each block of lines (a few lines that do one job): one short comment saying what the block does and why.
+  - Plain English, short sentences, no jargon without a short explanation.
+  - When you change a file, add or update the comments in the parts you touch. Do not leave old comments that are no longer true.
+- When done, tell me: what changed, how to test it (`npm run dev`, which page, what to click), and a commit message. I commit myself.
+- Do not read `docs/background/` unless I ask. It is old design background and mentions another stack (TypeScript, Python, Docker, LLM): ignore that stack.
 
-**Where it is going** (see `docs/PLAN.md`):
-1. Add a **WAAM repair cell** next to the existing jigless GMAW cell.
-2. Build **two study versions** from this one codebase:
-   - **chatbot**: LLM help chatbot, no colleague avatars;
-   - **colleagues**: on-shift colleague avatars, no chatbot.
-3. Drive anomalies from the **simulated alarm database** in `src/data/` (JSON), through the existing `CellGateway` (the stand-in for the AAS digital-twin middleware).
-4. Each participant does 8 assemblies (4 GMAW, 4 WAAM): baseline, welding-process anomaly, robot-programming anomaly, ML-defect-detection anomaly.
+**Code structure (MVC, keep it)**
+- `models/`: pure logic, no React. The cell state machine is `models/cellModel.js`.
+- `services/`: data access. `services/gateway/MockCellGateway.js` simulates the cell. JSON data in `src/data/` is loaded only by services.
+- `controllers/`: React providers and hooks. The only bridge between models/services and views.
+- `views/`: show things only. No data loading, no business logic, no service imports.
+- `conditions/`: the only place where the chatbot and colleagues builds differ. Views ask `useFeature(...)`.
 
-## Read before any task
-1. `README.md`: current architecture, design system, safety note.
-2. `docs/PLAN.md`: **how the new requirements map onto this repo, open decisions, and the milestone prompts.**
-3. `docs/design/`:
-   - `08-human-centred-design.md`: **users and design rules; they override generic UI habits**;
-   - `10-study-v2-two-conditions.md`: study design;
-   - `12-help-chatbot.md`: chatbot behaviour;
-   - `04-ai-transparency.md`: decision cards;
-   - `09-wizard-of-oz-study.md`: logging, questionnaires, ethics;
-   - `01`, `03`, `06` (background);
-   - `05` (phase 2 only).
-4. Data contracts: `src/data/alarms/alarm.schema.json`, `src/data/study/study-design.json`.
-
-Where design docs and this repo disagree on **technology** (they mention TypeScript, shadcn/ui, FastAPI, SQLite), **this repo wins**. Keep the existing stack unless I approve a change.
-
-## Architecture rules (existing MVC, keep it)
-- **models/**: pure domain logic, no React, no I/O.
-  - The cell state machine is `models/cellModel.js`.
-  - New process logic (WAAM) goes into model code driven by data, not into views.
-- **services/**: data access behind interfaces.
-  - `services/gateway/CellGateway.js` is the contract; `MockCellGateway.js` is the simulator.
-  - Alarms, scenarios and colleagues are loaded from `src/data/` by a service or repository, never imported directly into views.
-  - A future `AasCellGateway` must be possible without touching controllers or views.
-- **controllers/**: React context providers and hooks; the only bridge between models and views.
-- **views/**: presentational components only. **No data loading, no business logic, no direct service imports in views.**
-  - Exception to remove: `views/layout/Navbar.jsx` currently imports `getColleaguesOnShift` from a service. Move it into a controller hook.
-- **conditions/** (new): the only place where the two study versions differ (see `docs/PLAN.md`). No `if (condition === ...)` scattered through views; components ask a controller for feature flags.
-- **mock/**: SBAR alarm templates and fixtures. The new JSON alarm database replaces the hard-coded templates through a mapper, keeping the SBAR modal.
-
-## Non-negotiable rules
-1. **Keep the design system** in the README: HMI SYSTEMS-style primitives, tokens in `views/theme/tokens.css`, lamp + text for every status, purple "AI" badge on AI content, no vendor files or fonts.
-2. **Users** (docs/design/08):
-   - older workers, migrant workers with language barriers, casual workers;
-   - no reliance on memory;
-   - icon + short label;
-   - sentences of max ~12 words;
-   - 48 px minimum touch targets (64 px primary);
-   - no fine dragging;
-   - robot state always visible.
-   - Prepare all text for translation: put strings in one dictionary per language, no hard-coded text in new components.
-3. **Every AI or automated action is visible** (decision card or AI toast, purple AI badge). No silent automation.
-4. **Help is always one tap away and always logged.**
-   - Every help interaction is logged with timestamps: opened, channel, target colleague or chat turns, closed, resolution. It includes "help considered" (opened, then closed unused).
-   - In the chatbot build, the colleague avatars are hidden. In the colleagues build, the assistant dock is hidden.
-5. **Same help content in both builds.**
-   - The "AI" chatbot is the wizard typing (Wizard-of-Oz, decision D1 = a); there is **no LLM and no API key**.
-   - In both builds, the wizard sends the active alarm's `resolution_script` (plus free text): as the AI in the chatbot build, as the named colleague in the colleagues build.
-   - Never show `ground_truth`, `expected_response` or `false_alarm_is_correct` to participants. They are for scoring only.
-6. **The alarm flow is fixed by `docs/PLAN.md` section 2a:**
-   - three buttons: I can fix it / False alarm / Ask AI or Call <name>;
-   - a timer on the fix and help steps;
-   - a required explanation for "False alarm" ("Why is this detection wrong?") and for "Problem solved" ("Describe what you did to fix it").
-
-   Don't change this flow without asking me.
-7. **Safety note stays true:** on-screen stop is only a simulated controlled stop.
-8. **Study data:** logs are kept in the browser and exported by the wizard console as JSON/CSV. Participant codes only, no names.
-
-## Working style
-- I work in VS Code with Claude, and I commit to GitHub myself step by step. Pushing to `main` deploys to GitHub Pages.
-- Work one milestone at a time from `docs/PLAN.md`. Start with a short plan (files to create or change) and wait for my OK.
-- Do not rewrite working parts of the app unless the milestone requires it.
-- After each milestone: what changed, how to try it (`npm run dev`, which pages), what is still a stub, and a suggested commit message.
-- If something in the docs is unclear or conflicts with the repo, ask me.
+**Rules that never change**
+1. Keep the design system: follow `docs/STYLE.md` (HMI SYSTEMS look, built by us). Tokens in `views/theme/tokens.css`, lamp + text for every status, purple "AI" badge on AI content. Never add HMI SYSTEMS vendor files or fonts to the repo.
+2. Users are older, migrant and casual workers: icon + short label, sentences of max ~12 words, buttons at least 48 px (64 px main actions), no fine dragging, cell state always visible. New text goes in a dictionary, not hard-coded.
+3. The "AI" chatbot is me typing in the wizard console. **No LLM, no API key.**
+4. Both builds get the same help content: the alarm's `resolution_script`, sent by the wizard.
+5. Never show `ground_truth`, `expected_response` or `false_alarm_is_correct` to participants.
+6. The alarm flow is fixed by `docs/PLAN.md` section 2. Do not change it without asking me.
+7. Every help request is logged. Logs stay in the browser and are exported by the wizard. Participant codes only, no names.
+8. The on-screen stop is a simulated stop. Never claim it is a safety device.

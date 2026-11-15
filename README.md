@@ -1,6 +1,6 @@
 # COROB Weld Cell — Operator HMI (simulation)
 
-> **Next steps:** see [`docs/PLAN.md`](docs/PLAN.md) (WAAM cell, two study versions, alarm database) and [`CLAUDE.md`](CLAUDE.md) (instructions for Claude). Design background is in [`docs/design/`](docs/design/), and the simulated alarm database is in [`src/data/`](src/data/).
+> **Next steps:** see [`docs/PLAN.md`](docs/PLAN.md) (study scope, alarm flow, task list) and [`CLAUDE.md`](CLAUDE.md) (instructions for Claude). Old design background is in [`docs/background/`](docs/background/), and the simulated alarm database is in [`src/data/`](src/data/).
 
 Browser-based, mobile-responsive operator interface for a jigless GMAW multi-robot cell (use case UC1). It is a **front-end prototype for Wizard-of-Oz lab studies**: the cell, MES and AI services are simulated, and an experimenter drives events from a separate console tab. It does not connect to or control any equipment.
 

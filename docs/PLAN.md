@@ -71,7 +71,18 @@ An alert with `stop_behaviour: "none"` does **not** halt the cell and does **not
 ## 3 · Tasks (one at a time; plan first; test; commit)
 
 **Done on 15 Nov 2026:** T1, T1b, T6 (without Ajv schema check), T7, T8, T9, T11 (AI channel only). Also: every alarm has a neutral `operator_title` shown to participants (`title` is the researcher's label and may give the answer away).
-**Not done yet:** T0 comments for older files, T2, T2b, T3, T4/T5 (two builds; "Call <name>" button), T6b, T9b, T10 (export), T12–T17. Voice input in the text steps is not built.
+Also done (UI polish): T3 (colleagues via a controller hook), colleague photos with green/red status dots, assembly table with weld ID / CAD / WPS, WPS wire and gas in the start checklist, connection plugs, duty cycle chart, cell numbers GMAW #52 and WAAM #21.
+**Not done yet:** T0 comments for older files, T2, T2b, T4/T5 (two builds; "Call <name>" button), T6b, T9b, T10 (export), T12–T17. Voice input in the text steps is not built.
+
+**Order to finish the study app** (most important first):
+1. **T10** study log + export: without it there is no data.
+2. **T4 + T12** the two builds (chatbot / colleagues) and the "Call <name>" help. Then **T5** publish both.
+3. **T13** participant code + trial schedule (needs decision D5).
+4. **T6b + T9b** alarms only during the process; quiet alerts in the assembly report.
+5. **T14 + T15** real WAAM steps and screens.
+6. **T16** questionnaires (needs the HUROX and METUX item files).
+7. **T17** persona check and a full pilot session per build.
+Optional any time: T0 comments, T2 three cycle states, T2b style check.
 
 Paste a task into a **new chat** in Claude in VS Code. Each task starts with:
 `Read CLAUDE.md and docs/PLAN.md. Do task Tn. Read only the files named. Plan first, wait for my OK.`

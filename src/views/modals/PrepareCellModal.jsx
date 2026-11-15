@@ -5,10 +5,14 @@ import { Icon } from "../components/Icon.jsx";
 import { Modal } from "../components/overlays.jsx";
 import { Button, Checkbox } from "../components/primitives.jsx";
 
+// Checklist items. "step" = in which step of the dialog they are shown
+// (0 = Check equipment, 1 = Load parts). "process" = only for that cell type.
+// Next only works when all items of that step are ticked.
 const CHECKS = [
-  { id: "equipment", label: "Welding wire and shielding gas match the WPS." },
-  { id: "clean", label: "Parts and equipment are clean", description: "Wiped with solvent, no oil or debris." },
-  { id: "dry", label: "Parts are dry", description: "No moisture or condensation." },
+  { id: "equipment", step: 0, label: "Welding wire and shielding gas match the WPS." },
+  { id: "grippers", step: 0, process: "GMAW", label: "ABB grippers are clean.", description: "No spatter, oil or debris on the gripper fingers." },
+  { id: "clean", step: 1, label: "Parts are clean.", description: "Wiped with solvent, no oil or debris." },
+  { id: "dry", step: 1, label: "Parts are dry.", description: "No moisture or condensation." },
 ];
 
 /** Wire and gas from the WPS, shown big enough to compare with the spool and bottle labels. */
@@ -36,11 +40,16 @@ export function PrepareCellModal({ open, jobs, onClose, onStarted }) {
 
   useEffect(() => { if (open) { setStep(0); setChecks([]); setLoaded(false); setError(""); } }, [open]);
 
-  const STEPS = ["Check", "Load parts", "Lock cell", "Start"];
+  const STEPS = ["Check equipment", "Load parts", "Lock cell", "Start"];
+  // The checklist items of one step, for this cell's process (GMAW or WAAM).
+  const checksFor = (n) => CHECKS.filter((c) => c.step === n && (!c.process || c.process === state.process));
 
   // Wire and gas read from the WPS of the assembly being started.
   const consumables = wpsConsumables(jobs[0]);
-  const canNext = [checks.length === CHECKS.length, loaded && state.bin.inEnvelope, state.door.locked, true][step];
+  // Are all checklist items of this step ticked?
+  const stepChecked = (n) => checksFor(n).every((c) => checks.includes(c.id));
+  const canNext = [stepChecked(0), stepChecked(1) && loaded && state.bin.inEnvelope, state.door.locked, true][step];
+  const toggleCheck = (id, on) => setChecks((x) => (on ? [...x, id] : x.filter((y) => y !== id)));
 
   function start() {
     const r = actions.start(jobs, checks);
@@ -62,19 +71,27 @@ export function PrepareCellModal({ open, jobs, onClose, onStarted }) {
 
       {step === 0 && (
         <div className="stack">
-          {CHECKS.map((c) => (
+          {checksFor(0).map((c) => (
             <Checkbox key={c.id} label={c.label} checked={checks.includes(c.id)}
               description={c.id === "equipment" && consumables
                 ? <WpsConsumables {...consumables} />
                 : c.description}
-              onChange={(on) => setChecks((x) => (on ? [...x, c.id] : x.filter((y) => y !== c.id)))} />
+              onChange={(on) => toggleCheck(c.id, on)} />
           ))}
         </div>
       )}
 
       {step === 1 && (
         <div className="stack">
-          <p className="lead">Put the parts in the bin inside the cell. You don't need to line them up — the robots find them.</p>
+          {/* What to load comes from the assembly data (material + shape), e.g. "S355 steel plates". */}
+          {state.process === "WAAM" ? (
+            <p className="lead">Put the <strong>{jobs[0]?.parts ?? "part"}</strong> on the table in the cell.</p>
+          ) : (
+            <p className="lead">
+              Put the <strong>{jobs[0]?.parts ?? "parts"}</strong> in the bin in the cell.
+              No need to stack them. The robots will find and grab each piece.
+            </p>
+          )}
           <div className={`callout ${state.bin.inEnvelope ? "callout-positive" : "callout-error"}`}>
             <Icon name={state.bin.inEnvelope ? "check" : "alert"} />
             <div>
@@ -83,6 +100,10 @@ export function PrepareCellModal({ open, jobs, onClose, onStarted }) {
             </div>
           </div>
           <ul className="job-mini">{jobs.map((j) => <li key={j.id}><strong>{j.name ?? j.id}</strong> — {j.tags.geometry}, {j.tags.material}</li>)}</ul>
+          {/* Clean and dry: checked while loading the parts. */}
+          {checksFor(1).map((c) => (
+            <Checkbox key={c.id} label={c.label} description={c.description} checked={checks.includes(c.id)} onChange={(on) => toggleCheck(c.id, on)} />
+          ))}
           <Checkbox label="I have loaded the parts into the bin" checked={loaded} onChange={setLoaded} />
         </div>
       )}

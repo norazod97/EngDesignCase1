@@ -9,8 +9,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { APP_CONFIG } from "../config/appConfig.js";
 import * as flowModel from "../models/alarmFlow.js";
-import { useAssistant } from "./AssistantController.jsx";
-import { useCell, wizardChannel } from "./CellController.jsx";
+import { appendEvent } from "../services/studyLog.js";
+import { useCell } from "./CellController.jsx";
+import { useHelp } from "./HelpController.jsx";
 
 /**
  * Hook for the alarm window.
@@ -19,7 +20,7 @@ import { useCell, wizardChannel } from "./CellController.jsx";
  */
 export function useAlarmFlow() {
   const { state, actions } = useCell();
-  const { ask } = useAssistant();
+  const help = useHelp(); // the help channel of this build: AI or a colleague
   const alarm = state.activeAlarm;
   const [flow, setFlow] = useState(null);
   const [now, setNow] = useState(() => Date.now());
@@ -42,10 +43,34 @@ export function useAlarmFlow() {
     actions.log(message, { alarmId: alarm?.id, errorCode: alarm?.errorCode, ...details });
   }, [actions, alarm]);
 
-  // Tell the wizard console that help was opened, so the researcher can send the script.
-  const announceHelp = useCallback(() => {
-    wizardChannel.post({ type: "help-opened", alarmId: alarm?.id, errorCode: alarm?.errorCode, channel: APP_CONFIG.alarmFlow.helpChannel });
-  }, [alarm]);
+  // Write one event to the study log (kept for the analysis and exported by the wizard).
+  const study = useCallback((type, fields = {}) => {
+    appendEvent("participant", {
+      type, process: state.process, cellId: state.cellId, assembly: alarm?.jobId ?? state.cycle.currentJobId ?? undefined,
+      alarmId: alarm?.id, errorCode: alarm?.errorCode, ...fields,
+    });
+  }, [state, alarm]);
+
+  // First chat message, so the wizard knows which error this is about.
+  // Chatbot build: to the AI. Colleagues build: to the named colleague.
+  const intro = useCallback((who, tried) => {
+    const hello = who ? `Hi ${who.name}, ` : "";
+    help.send(`${hello}${tried ? "I tried to fix" : "I need help with"} error ${alarm?.errorCode ?? ""}.${tried ? " Can you help me?" : ""}`.trim());
+  }, [help, alarm]);
+
+  // Open the help channel inside the alarm window. In the colleagues build the
+  // suggested colleague is named; if nobody fits, the participant picks from a list.
+  const startHelp = useCallback((tried) => {
+    const who = help.isAi ? null : help.suggested;
+    help.openHelp({ via: "alarm", who, showPanel: false });
+    if (help.isAi || who) intro(who, tried);
+  }, [help, intro]);
+
+  /** Colleagues build, nobody suggested: the participant picks a colleague. */
+  const pickColleague = useCallback((who) => {
+    help.chooseColleague(who);
+    intro(who, flow?.switches.length > 0);
+  }, [help, intro, flow]);
 
   // 3. The actions the view can call. Each one moves the flow and logs it.
   const choose = useCallback((choice) => {
@@ -53,24 +78,22 @@ export function useAlarmFlow() {
     setNow(t);
     setFlow((f) => flowModel.choose(f, choice, t));
     log(`Alarm flow: chose "${choice}".`, { choice });
-    if (choice === "help") {
-      announceHelp();
-      // First message in the chat, so the wizard knows which error this is about.
-      ask(`I need help with error ${alarm?.errorCode ?? ""}: ${alarm?.title ?? ""}`.trim());
-    }
-  }, [log, announceHelp, ask, alarm]);
+    study("alarm_choice", { choice });
+    if (choice === "help") startHelp(false);
+  }, [log, study, startHelp]);
 
   const switchToHelp = useCallback(() => {
     setFlow((f) => flowModel.switchToHelp(f, Date.now()));
     log("Alarm flow: switched from fix to help.", { switch: "fix->help" });
-    announceHelp();
-    ask(`I tried to fix error ${alarm?.errorCode ?? ""}. Can you help me?`.trim());
-  }, [log, announceHelp, ask, alarm]);
+    study("alarm_switch_to_help");
+    startHelp(true);
+  }, [log, study, startHelp]);
 
   const markSolved = useCallback(() => {
     setFlow((f) => flowModel.markSolved(f));
     log("Alarm flow: problem solved pressed.");
-  }, [log]);
+    study("alarm_problem_solved_pressed");
+  }, [log, study]);
 
   const back = useCallback(() => setFlow((f) => flowModel.backToChoice(f)), []);
 
@@ -80,9 +103,16 @@ export function useAlarmFlow() {
     const record = flowModel.flowRecord(flow, text, Date.now());
     // The full record goes into the cell log (exported later, PLAN T10).
     log(`Alarm flow done: ${record.outcome} after ${record.totalS} s.`, { record });
+    // The full record, one row in the export (PLAN section 2 "Logged per alarm").
+    study("alarm_flow_done", {
+      choice: record.firstChoice, outcome: record.outcome, text: record.text,
+      firstChoiceAfterS: record.firstChoiceAfterS, timerS: record.timerS, totalS: record.totalS,
+      helpOpened: record.helpOpened, switches: record.switches.length, details: record,
+    });
+    if (record.helpOpened) help.closeHelp("problem_solved"); // ends the help session in the log
     actions.closeAlarm(record.outcome === "false_alarm" ? "dismissed" : "fixed", { comment: record.text });
     return { ok: true };
-  }, [flow, log, actions]);
+  }, [flow, log, study, actions, help]);
 
   const seconds = flow ? flowModel.elapsedSeconds(flow, now) : 0;
 
@@ -92,11 +122,16 @@ export function useAlarmFlow() {
     seconds,
     timerText: flowModel.formatTimer(seconds),
     timerVisible: APP_CONFIG.alarmFlow.timer === "visible",
-    helpChannel: APP_CONFIG.alarmFlow.helpChannel,
+    helpChannel: help.isAi ? "ai" : "colleague",
+    suggested: help.suggested, // colleague named on "Call <name>" (colleagues build), or null
+    colleagues: help.colleagues,
+    persona: help.persona, // who answers in the chat
+    pickColleague,
+    sendMessage: help.send,
     choose,
     switchToHelp,
     markSolved,
     back,
     submit,
-  }), [alarm, flow, seconds, choose, switchToHelp, markSolved, back, submit]);
+  }), [alarm, flow, seconds, help, pickColleague, choose, switchToHelp, markSolved, back, submit]);
 }

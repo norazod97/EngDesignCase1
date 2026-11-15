@@ -3,8 +3,10 @@
 import { HashRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AssistantController } from "./controllers/AssistantController.jsx";
 import { CellController } from "./controllers/CellController.jsx";
+import { HelpController } from "./controllers/HelpController.jsx";
 import { NotificationController } from "./controllers/NotificationController.jsx";
 import { SessionController, useSession } from "./controllers/SessionController.jsx";
+import { StudyLogController } from "./controllers/StudyLogController.jsx";
 import { AppShell } from "./views/layout/AppShell.jsx";
 import { DashboardPage } from "./views/pages/DashboardPage.jsx";
 import { LoginPage } from "./views/pages/LoginPage.jsx";
@@ -22,11 +24,17 @@ function AuthenticatedApp() {
 
   return (
     <CellController cellId={shift.cellId}>
-      <NotificationController>
-        <AssistantController>
-          <AppShell />
-        </AssistantController>
-      </NotificationController>
+      {/* Writes every relevant cell event to the study log (PLAN T10). */}
+      <StudyLogController>
+        <NotificationController>
+          <AssistantController>
+            {/* One help channel for both study versions (PLAN T4 + T12). */}
+            <HelpController>
+              <AppShell />
+            </HelpController>
+          </AssistantController>
+        </NotificationController>
+      </StudyLogController>
     </CellController>
   );
 }

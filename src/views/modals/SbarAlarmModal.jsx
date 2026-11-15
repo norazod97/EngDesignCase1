@@ -1,9 +1,9 @@
 // VIEW — the alarm window (docs/PLAN.md section 2).
 // Opens by itself when the cell has an active alarm and cannot be closed
 // without finishing the flow. It shows what happened (no fix steps!), then:
-//   [I can fix it]  [False alarm]  [Ask AI]
+//   [I can fix it]  [False alarm]  [Ask AI]  (colleagues build: [Call Henk])
 // All logic (steps, timer, logging) lives in controllers/AlarmFlowController.jsx.
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useAlarmFlow } from "../../controllers/AlarmFlowController.jsx";
 import { useAssistant } from "../../controllers/AssistantController.jsx";
 import { useCell } from "../../controllers/CellController.jsx";
@@ -12,6 +12,7 @@ import { FlowStep, canSubmit } from "../../models/alarmFlow.js";
 import { Icon } from "../components/Icon.jsx";
 import { Modal } from "../components/overlays.jsx";
 import { AiBadge, Button, Confidence, TextArea } from "../components/primitives.jsx";
+import { ColleaguePicker, HelpChat } from "../components/HelpChat.jsx";
 
 export function SbarAlarmModal() {
   const f = useAlarmFlow();
@@ -43,9 +44,9 @@ export function SbarAlarmModal() {
         </div>
       )}
 
-      {flow.step === FlowStep.CHOOSE && <ChooseStep alarm={alarm} onChoose={f.choose} helpChannel={f.helpChannel} />}
-      {flow.step === FlowStep.FIX && <FixStep onSolved={f.markSolved} onHelp={f.switchToHelp} />}
-      {flow.step === FlowStep.HELP && <HelpStep since={flow.helpOpenedAt} onSolved={f.markSolved} />}
+      {flow.step === FlowStep.CHOOSE && <ChooseStep alarm={alarm} onChoose={f.choose} help={helpButton(f)} />}
+      {flow.step === FlowStep.FIX && <FixStep onSolved={f.markSolved} onHelp={f.switchToHelp} help={helpButton(f)} />}
+      {flow.step === FlowStep.HELP && <HelpStep f={f} onSolved={f.markSolved} />}
       {flow.step === FlowStep.FALSE_ALARM && (
         <TextStep key="false" lead={T.falseLead} chips={T.falseChips} onSubmit={f.submit} onBack={f.back} />
       )}
@@ -56,8 +57,17 @@ export function SbarAlarmModal() {
   );
 }
 
+/**
+ * Label, hint and icon of the help button. This is where the two study versions differ:
+ * chatbot build -> "Ask AI"; colleagues build -> "Call Henk" (or "Call a colleague").
+ */
+function helpButton(f) {
+  if (f.helpChannel === "ai") return { label: T.askAi, hint: T.askAiHint, icon: "sparkle", ai: true };
+  return { label: f.suggested ? T.callPerson(f.suggested.name) : T.callSomeone, hint: T.callPersonHint, icon: "phone", ai: false };
+}
+
 /** Step 1: what happened + the three big buttons. */
-function ChooseStep({ alarm, onChoose, helpChannel }) {
+function ChooseStep({ alarm, onChoose, help }) {
   return (
     <div className="sbar">
       {/* S: what happened, in plain words. */}
@@ -100,10 +110,10 @@ function ChooseStep({ alarm, onChoose, helpChannel }) {
         <button type="button" className="flow-choice" onClick={() => onChoose("false_alarm")}>
           <Icon name="close" size={32} /><strong>{T.falseAlarm}</strong><small>{T.falseAlarmHint}</small>
         </button>
-        <button type="button" className="flow-choice flow-choice-help" onClick={() => onChoose("help")}>
-          <Icon name="sparkle" size={32} />
-          <strong>{helpChannel === "ai" ? T.askAi : T.callPerson("colleague")}</strong>
-          <small>{helpChannel === "ai" ? T.askAiHint : T.callPersonHint}</small>
+        <button type="button" className={`flow-choice ${help.ai ? "flow-choice-help" : "flow-choice-call"}`} onClick={() => onChoose("help")}>
+          <Icon name={help.icon} size={32} />
+          <strong>{help.label}</strong>
+          <small>{help.hint}</small>
         </button>
       </div>
     </div>
@@ -126,48 +136,31 @@ function DoorRow() {
 }
 
 /** Step "I can fix it": the timer runs; two buttons. */
-function FixStep({ onSolved, onHelp }) {
+function FixStep({ onSolved, onHelp, help }) {
   return (
     <div className="stack">
       <p className="lead">{T.fixLead}</p>
       <DoorRow />
       <div className="flow-actions">
         <Button variant="accent" size="lg" icon="check" onClick={onSolved}>{T.problemSolved}</Button>
-        <Button variant="ink" size="lg" icon="sparkle" onClick={onHelp}>{T.askAi}</Button>
+        <Button variant="ink" size="lg" icon={help.icon} onClick={onHelp}>{help.label}</Button>
       </div>
     </div>
   );
 }
 
-/** Step "Ask AI": chat with the wizard (who types as the AI) + "Problem solved". */
-function HelpStep({ since, onSolved }) {
-  const { messages, typing, ask } = useAssistant();
-  const [text, setText] = useState("");
-  const listRef = useRef(null);
-  // Only show the messages of this help session (not older chats).
-  const shown = messages.filter((m) => new Date(m.at).getTime() >= since - 1000);
-
-  // Keep the newest message in view.
-  useEffect(() => { listRef.current?.scrollTo({ top: listRef.current.scrollHeight }); }, [shown.length, typing]);
-
-  function send(e) {
-    e.preventDefault();
-    if (!text.trim()) return;
-    ask(text.trim());
-    setText("");
-  }
-
+/**
+ * Help step: chat with the AI (chatbot build) or a colleague (colleagues build).
+ * Colleagues build with nobody suggested: first pick a colleague from the list.
+ */
+function HelpStep({ f, onSolved }) {
+  const { messages, typing } = useAssistant();
   return (
     <div className="stack">
-      <p className="lead">{T.helpLead} <AiBadge>AI</AiBadge></p>
-      <ol className="assistant-list flow-chat" ref={listRef} aria-live="polite">
-        {shown.map((m) => <li key={m.id} className={`bubble bubble-${m.from}`}>{m.text}</li>)}
-        {typing && <li className="bubble bubble-assistant bubble-typing" aria-label={T.helpWaiting}><span /><span /><span /></li>}
-      </ol>
-      <form className="assistant-form" onSubmit={send}>
-        <input className="input" value={text} onChange={(e) => setText(e.target.value)} placeholder={T.helpPlaceholder} aria-label={T.helpPlaceholder} />
-        <Button type="submit" variant="ink" icon="send">{T.send}</Button>
-      </form>
+      <p className="lead">{T.helpLead}</p>
+      {f.persona
+        ? <HelpChat persona={f.persona} messages={messages} typing={typing} since={f.flow.helpOpenedAt} onSend={f.sendMessage} />
+        : <ColleaguePicker colleagues={f.colleagues} onPick={f.pickColleague} />}
       <DoorRow />
       <div className="flow-actions">
         <Button variant="accent" size="lg" icon="check" onClick={onSolved}>{T.problemSolved}</Button>

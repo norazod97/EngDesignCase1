@@ -2,20 +2,23 @@ import { useCellSummary } from "../../controllers/CellController.jsx";
 import { useNotifications } from "../../controllers/NotificationController.jsx";
 import { useSession } from "../../controllers/SessionController.jsx";
 import { useClock } from "../../controllers/useClock.js";
-import { useColleaguesOnShift } from "../../controllers/useColleagues.js";
+import { useFeature } from "../../controllers/ConditionController.js";
+import { useHelp } from "../../controllers/HelpController.jsx";
 import { Avatar, IconButton } from "../components/primitives.jsx";
 import { StopCycleButton } from "../components/overlays.jsx";
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
 const timeFmt = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" });
 
-export function Navbar({ onToggleMenu, menuOpen, panel, onPanel, onStopRequest }) {
+export function Navbar({ onToggleMenu, menuOpen, panel, onPanel, helpOpen, onHelp, onStopRequest }) {
   const { operator } = useSession();
   const { canStop } = useCellSummary();
   const { unread } = useNotifications();
   const now = useClock();
-  // Colleagues on the shop floor (from the controller, not from a service).
-  const onShift = useColleaguesOnShift().filter((c) => c.online);
+  const help = useHelp();
+  // Colleague pictures only in the colleagues build (chatbot build: no avatars).
+  const showColleagues = useFeature("colleagueAvatars");
+  const onShift = help.colleagues.filter((c) => c.online);
 
   return (
     <header className="navbar">
@@ -38,23 +41,23 @@ export function Navbar({ onToggleMenu, menuOpen, panel, onPanel, onStopRequest }
 
       <div className="navbar-center">
         {/* Colleagues as "stories": round picture with the first name under it.
-            Green dot = available, red dot = busy. Tap opens the Messages panel. */}
-        <ul className="navbar-stories" aria-label={`${onShift.length} colleagues on the shop floor`}>
+            Green dot = available, red dot = busy. Tap = call that colleague (logged). */}
+        {showColleagues && <ul className="navbar-stories" aria-label={`${onShift.length} colleagues on the shop floor`}>
           {onShift.map((c) => (
             <li key={c.id}>
-              <button type="button" className={`story is-${c.status}`} onClick={() => onPanel("messages")} title={`${c.name} · ${c.role} · ${c.status}`}>
+              <button type="button" className={`story is-${c.status}`} onClick={() => help.openHelp({ via: "avatar", who: c })} title={`${c.name} · ${c.role} · ${c.status}`}>
                 <span className="story-ring"><Avatar name={c.name} photo={c.photo} status={c.status} size={44} /></span>
                 <span className="story-name">{c.name}</span>
               </button>
             </li>
           ))}
-        </ul>
+        </ul>}
       </div>
 
       <div className="navbar-right">
-        <IconButton icon="chat" label="Messages" selected={panel === "messages"} onClick={() => onPanel("messages")} />
         <IconButton icon="bell" label={`Notifications${unread ? `, ${unread} new` : ""}`} badge={unread} selected={panel === "notifications"} onClick={() => onPanel("notifications")} />
-        <button type="button" className={`help-btn ${panel === "help" ? "is-selected" : ""}`} onClick={() => onPanel("help")}>
+        {/* Help is always one tap away: opens the AI (chatbot build) or the colleague list (colleagues build). */}
+        <button type="button" className={`help-btn ${helpOpen ? "is-selected" : ""}`} onClick={onHelp}>
           <span aria-hidden="true">?</span> Help
         </button>
         <StopCycleButton onStop={onStopRequest} disabled={!canStop} compact />

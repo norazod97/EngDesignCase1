@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "dev:chatbot": "vite --mode chatbot",
+    "dev:colleagues": "vite --mode colleagues",
+    "build": "node scripts/build-all.mjs",
+    "build:chatbot": "vite build --mode chatbot",
+    "build:colleagues": "vite build --mode colleagues",
     "preview": "vite preview"
   },
   "dependencies": {

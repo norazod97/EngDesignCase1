@@ -8,8 +8,11 @@ Browser-based, mobile-responsive operator interface for a jigless GMAW multi-rob
 
 ```
 npm install
-npm run dev          # http://localhost:5173
-npm run build        # production build in dist/
+npm run dev                # chatbot version, http://localhost:5173
+npm run dev:colleagues     # colleagues version (run one version at a time, or use another port)
+npm run build              # both versions: dist/chatbot, dist/colleagues + start page dist/index.html
+npm run build:chatbot      # one version only, in dist/
+npm run build:colleagues   # one version only, in dist/
 ```
 
 Demo accounts: `operator1 / weld123` (GMAW cell), `operator2 / weld456` (WAAM cell) — client-side only, **not secure**.
@@ -18,7 +21,8 @@ Demo accounts: `operator1 / weld123` (GMAW cell), `operator2 / weld456` (WAAM ce
 
 1. Open the app and sign in as the participant (e.g. `jack`).
 2. In a **second tab of the same browser**, open `#/wizard` (e.g. `http://localhost:5173/#/wizard`).
-3. From the console you can trigger SBAR alarms (halting or warning), send AI-adjustment toasts, move the parts bin out of reach, set equipment status, choose the next AI-SPECTO verdict, "upload" missing CAD/WPS, change simulation speed, and type the assistant's chat answers.
+3. In the console's **Study session · log** card, type the participant code (e.g. `P07`, never a name). Every event is logged in the browser; after the session press **Export CSV** (or JSON), then **Clear log**.
+4. From the console you can trigger SBAR alarms (halting or warning), send AI-adjustment toasts, move the parts bin out of reach, set equipment status, choose the next AI-SPECTO verdict, "upload" missing CAD/WPS, change simulation speed, and type the assistant's chat answers.
 
 Tabs talk through `BroadcastChannel`, so both must be in the same browser profile. Each participant tab runs its own simulated cell. To run the console on a different device, replace `src/services/wizardChannel.js` with a WebSocket relay.
 
@@ -64,3 +68,10 @@ The on-screen **Stop cycle** button requests a controlled stop in the simulation
 ## GitHub Pages
 
 `.github/workflows/deploy-pages.yml` builds and publishes `dist/` on every push to `main`. The app uses hash routing, so deep links work on Pages.
+
+Published addresses:
+- Start page: `https://norazod97.github.io/EngDesignCase1/`
+- Version A (chatbot): `…/EngDesignCase1/chatbot/`, wizard `…/EngDesignCase1/chatbot/#/wizard`
+- Version B (colleagues): `…/EngDesignCase1/colleagues/`, wizard `…/EngDesignCase1/colleagues/#/wizard`
+
+Each version only talks to its own wizard. Use the participant screen and the wizard of the **same** version.

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useAssistant } from "../../controllers/AssistantController.jsx";
+import { useHelp } from "../../controllers/HelpController.jsx";
 import { Icon } from "../components/Icon.jsx";
 import { AiBadge, IconButton } from "../components/primitives.jsx";
 
@@ -7,7 +8,8 @@ const SUGGESTIONS = ["What does this alarm mean?", "How do I clean the camera le
 
 /** Always-available assistant; collapses to a tab on small screens. */
 export function AssistantDock({ open, onToggle }) {
-  const { messages, typing, ask } = useAssistant();
+  const { messages, typing } = useAssistant();
+  const { send: ask } = useHelp(); // send through the help controller, so every message is counted and logged
   const [text, setText] = useState("");
   const listRef = useRef(null);
 

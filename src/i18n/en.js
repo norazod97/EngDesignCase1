@@ -23,6 +23,7 @@ export const ALARM_TEXT = {
   askAi: "Ask AI",
   askAiHint: "Get step-by-step help.",
   callPerson: (name) => `Call ${name}`,
+  callSomeone: "Call a colleague",
   callPersonHint: "A colleague helps you.",
   timer: "Time",
   fixTitle: "Fix the problem",
@@ -46,4 +47,20 @@ export const ALARM_TEXT = {
   doorUnlocked: "Cell door is unlocked",
   unlock: "Unlock to enter",
   lock: "Lock door",
+};
+
+// TEXT — help chat and colleague list (both study versions).
+export const HELP_TEXT = {
+  aiName: "AI assistant",
+  typing: "Typing…",
+  placeholder: "Type a question…",
+  send: "Send",
+  pickLead: "Who do you want to call?",
+  available: "available",
+  busy: "busy",
+  call: "Call",
+  panelTitleAi: "Ask AI",
+  panelTitleColleagues: "Call a colleague",
+  close: "Close",
+  callSomeone: "Call a colleague",
 };

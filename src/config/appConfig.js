@@ -7,9 +7,8 @@ export const APP_CONFIG = {
   toastMs: 10000,
   /**
    * Alarm flow (docs/PLAN.md section 2).
-   * helpChannel: "ai" = chatbot build ("Ask AI"). The colleagues build ("Call <name>")
-   *              comes with the two-build task (PLAN T4/T12).
    * timer: "visible" shows the count-up timer; "logged_only" hides it but still logs it.
+   * (Who helps, AI or colleague, is set by the study version: src/conditions/.)
    */
-  alarmFlow: { helpChannel: "ai", timer: "visible" },
+  alarmFlow: { timer: "visible" },
 };

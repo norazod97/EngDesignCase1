@@ -506,3 +506,12 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .wps-consumables > span:not(.muted) { display: grid; grid-template-columns: 130px 1fr; align-items: baseline; gap: 8px; padding: 6px 10px; border-left: 4px solid var(--accent); background: var(--accent-tint); }
 .wps-consumables small { color: var(--ink-muted); font-size: var(--fs-xs); text-transform: uppercase; font-family: var(--font-mono); }
 .wps-consumables strong { font-family: var(--font-mono); font-size: var(--fs-lg); color: var(--ink); }
+
+/* ---- Help chat: AI vs colleague (PLAN T4 + T12) ---------------------------- */
+.help-chat-head { display: flex; align-items: center; gap: 10px; }
+.help-chat-head span { display: grid; }
+.help-chat-head small { color: var(--ink-muted); }
+.bubble-colleague { align-self: flex-start; background: var(--field); border: 1.5px solid var(--line); border-bottom-left-radius: 4px; }
+.flow-choice-call { border-color: var(--lamp-positive); }
+.flow-choice-call .icon { color: var(--text-positive); }
+.help-drawer .drawer-body { display: grid; gap: 14px; }

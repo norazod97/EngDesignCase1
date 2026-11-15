@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { createWizardChannel } from "../../services/wizardChannel.js";
 import { AI_ADJUSTMENTS } from "../../mock/scenarios.js";
 // The wizard is the researcher's tool, so it reads the alarm database directly.
-import { listAlarms } from "../../services/alarmRepository.js";
+import { isOutcomeCorrect, listAlarms } from "../../services/alarmRepository.js";
+import { appendEvent, clearLog, countEvents, downloadText, getParticipantCode, readAll, setParticipantCode, toCsv } from "../../services/studyLog.js";
 import { EquipmentStatus } from "../../models/equipment.js";
 import { formatTime } from "../../models/job.js";
 import { Button, Card, StatusLamp, Switch } from "../components/primitives.jsx";
@@ -24,6 +25,7 @@ export function WizardPage() {
   // Resolution script: how many steps were already sent for the current alarm.
   const [sent, setSent] = useState({ alarmAt: null, count: 0 });
   const [helpNote, setHelpNote] = useState(null); // "Participant opened help" banner
+  const [build, setBuild] = useState(null); // which study version the participant tab runs
 
   useEffect(() => {
     document.title = "Wizard console · COROB";
@@ -32,21 +34,52 @@ export function WizardPage() {
       if (msg?.type === "state") setSnap(msg);
       if (msg?.type === "chat" && msg.from === "operator") setChat((c) => [...c, { from: "operator", text: msg.text, at: new Date().toISOString() }]);
       if (msg?.type === "help-opened") setHelpNote({ ...msg, at: new Date().toISOString() });
+      if (msg?.type === "condition") setBuild(msg);
     });
     channel.current.post({ type: "hello" });
     return () => { off(); channel.current.close(); };
   }, []);
 
-  const cmd = (name, args) => channel.current?.post({ type: "cmd", name, args });
+  const cmd = (name, args) => {
+    channel.current?.post({ type: "cmd", name, args });
+    if (name === "alarm") appendEvent("wizard", { type: "wizard_alarm_triggered", alarmId: args.id }); // study log
+  };
   const say = (text) => {
     if (!text.trim()) return;
     channel.current?.post({ type: "chat", from: "assistant", text });
+    appendEvent("wizard", { type: "wizard_message", alarmId: snap?.state?.activeAlarm?.id, text }); // study log
     setChat((c) => [...c, { from: "assistant", text, at: new Date().toISOString() }]);
     setReply("");
   };
 
   const s = snap?.state;
   const sim = snap?.sim;
+
+  // ---- Study log: participant code + export (PLAN T10) ----
+  const [code, setCode] = useState(() => getParticipantCode());
+  const [logCount, setLogCount] = useState(() => countEvents());
+  useEffect(() => {
+    // Refresh the event counter every 2 s (the participant tab writes to the same storage).
+    const id = setInterval(() => setLogCount(countEvents()), 2000);
+    return () => clearInterval(id);
+  }, []);
+  function saveCode(value) {
+    setCode(value);
+    setParticipantCode(value);
+  }
+  // All events, with the scoring column filled in for finished alarm flows.
+  function exportRows() {
+    return readAll().map((e) => (e.type === "alarm_flow_done" ? { ...e, falseAlarmCorrect: isOutcomeCorrect(e.alarmId, e.outcome) } : e));
+  }
+  const fileBase = () => `corob-log-${code || "no-code"}-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}`;
+  function exportJson() { downloadText(`${fileBase()}.json`, JSON.stringify(exportRows(), null, 2), "application/json"); }
+  function exportCsv() { downloadText(`${fileBase()}.csv`, toCsv(exportRows()), "text/csv"); }
+  function clearAll() {
+    if (window.confirm(`Delete all ${countEvents()} logged events? Export them first. This cannot be undone.`)) {
+      clearLog();
+      setLogCount(0);
+    }
+  }
 
   // Alarms for the connected cell's process (GMAW or WAAM), grouped by knowledge domain.
   const alarms = listAlarms(s?.process);
@@ -65,10 +98,26 @@ export function WizardPage() {
       <header className="wizard-head">
         <h1>Wizard console</h1>
         <span className={`tag ${s ? "tag-positive" : "tag-warning"}`}>{s ? `Connected · cell ${s.cellId} · ${s.cycle.state}` : "Waiting for participant tab (sign in there)…"}</span>
+        {build && <span className="tag tag-info">Version: {build.label}</span>}
+        {helpNote && <span className="tag tag-warning">Help opened via {helpNote.via}{helpNote.colleague ? ` · talking to ${helpNote.colleague}` : build?.label === "Colleagues" ? " · choosing a colleague" : " · AI"} · {formatTime(helpNote.at)}</span>}
         {!channel.current?.available && channel.current && <span className="tag tag-error">BroadcastChannel unsupported</span>}
       </header>
 
       <div className="wizard-grid">
+        <Card title="Study session · log">
+          <div className="stack">
+            <label className="field-label" htmlFor="pcode">Participant code (no names)</label>
+            <input id="pcode" className="input" value={code} onChange={(e) => saveCode(e.target.value)} placeholder="e.g. P07" />
+            <p><strong>{logCount}</strong> events logged{code ? ` · next events get code ${code}` : " · set a code before the session"}</p>
+            <div className="row wrap">
+              <Button variant="accent" icon="download" onClick={exportCsv} disabled={!logCount}>Export CSV</Button>
+              <Button variant="ink" icon="download" onClick={exportJson} disabled={!logCount}>Export JSON</Button>
+              <Button variant="ghost" onClick={clearAll} disabled={!logCount}>Clear log</Button>
+            </div>
+            <p className="muted">The log stays in this browser until you clear it. Export after each participant.</p>
+          </div>
+        </Card>
+
         <Card title={`Alarms · ${s?.process ?? "sign in first"}`}>
           <div className="stack">
             {alarms.map((a) => (
@@ -83,7 +132,7 @@ export function WizardPage() {
           {!active ? <p className="muted">No active alarm.</p> : (
             <div className="stack">
               <p><strong>{active.errorCode}</strong> · {active.id} · {active.title}</p>
-              {helpNote?.alarmId === active.id && <p className="tag tag-warning">Participant opened help ({helpNote.channel}) at {formatTime(helpNote.at)}</p>}
+              {helpNote?.alarmId === active.id && <p className="tag tag-warning">Participant opened help · {helpNote.colleague ? `your messages appear as ${helpNote.colleague}` : helpNote.channel === "ai" ? "your messages appear as the AI" : "waiting for them to pick a colleague"} · {formatTime(helpNote.at)}</p>}
               <ol className="wizard-script">
                 {script.map((step, i) => <li key={i} className={i < sentCount ? "is-sent" : ""}>{step}</li>)}
               </ol>
@@ -135,7 +184,7 @@ export function WizardPage() {
           </ul>
         </Card>
 
-        <Card title="Assistant (you type the answers)" className="span-2">
+        <Card title={`Chat · you type as ${helpNote?.colleague ?? (build?.label === "Colleagues" ? "the colleague" : "the AI")}`} className="span-2">
           <ol className="assistant-list wizard-chat">
             {chat.map((m, i) => <li key={i} className={`bubble bubble-${m.from}`}><small>{formatTime(m.at)}</small> {m.text}</li>)}
           </ol>

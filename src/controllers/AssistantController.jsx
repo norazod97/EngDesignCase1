@@ -2,6 +2,8 @@
 // experimenter types the replies in the #/wizard console; with no wizard
 // connected a scripted fallback answers, so the UI never hangs.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { CONDITION } from "../conditions/index.js";
+import { appendEvent } from "../services/studyLog.js";
 import { wizardChannel } from "./CellController.jsx";
 
 const AssistantContext = createContext(null);
@@ -10,8 +12,10 @@ const AssistantContext = createContext(null);
 let messageCounter = 0;
 const nextId = () => `${Date.now()}-${++messageCounter}`;
 
-const FALLBACK =
-  "I can't reach the knowledge base right now. You can ask your supervisor using the Help button at the top.";
+// Shown only if nobody answers in time (no wizard connected). Wording depends on the study version.
+const FALLBACK = CONDITION.helpChannel === "ai"
+  ? "I can't answer right now. Please try again in a moment."
+  : "No answer yet. Try again, or call another colleague.";
 
 export function AssistantController({ children }) {
   const [messages, setMessages] = useState([
@@ -25,6 +29,7 @@ export function AssistantController({ children }) {
       clearTimeout(fallbackTimer.current);
       setTyping(false);
       setMessages((m) => [...m, { id: nextId(), from: "assistant", text: msg.text, at: new Date().toISOString() }]);
+      appendEvent("participant", { type: "chat_received", choice: CONDITION.helpChannel, text: msg.text }); // help message shown to the participant
     }
     if (msg?.type === "chat-typing") setTyping(!!msg.on);
   }), []);
@@ -34,6 +39,7 @@ export function AssistantController({ children }) {
     setMessages((m) => [...m, entry]);
     setTyping(true);
     wizardChannel.post({ type: "chat", from: "operator", text });
+    appendEvent("participant", { type: "chat_sent", text }); // participant's question
     clearTimeout(fallbackTimer.current);
     fallbackTimer.current = setTimeout(() => {
       setTyping(false);

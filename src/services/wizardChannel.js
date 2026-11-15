@@ -3,7 +3,11 @@
 // the same browser profile. A second device would need a small WebSocket
 // relay instead; keep this module as the single place to swap that in.
 
-const CHANNEL_NAME = "corob-woz";
+import { CONDITION } from "../conditions/index.js";
+
+// One channel per study version. Both versions are published on the same web
+// address, so without this a chatbot wizard could talk to a colleagues participant.
+const CHANNEL_NAME = `corob-woz-${CONDITION.id}`;
 
 export function createWizardChannel() {
   if (typeof BroadcastChannel === "undefined") {

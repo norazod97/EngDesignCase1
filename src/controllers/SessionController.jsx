@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import * as mes from "../services/mesService.js";
 import { load, save } from "../services/storage.js";
+import { appendEvent } from "../services/studyLog.js";
 
 const SessionContext = createContext(null);
 
@@ -30,11 +31,13 @@ export function SessionController({ children }) {
     const profile = await mes.authenticate(id, password);
     if (!profile) return { ok: false, reason: "Operator ID or password not recognised. Please try again." };
     save("operator", profile.id);
+    appendEvent("participant", { type: "sign_in", details: { account: profile.id } }); // demo account id, not a name
     await hydrate(profile);
     return { ok: true };
   }, [hydrate]);
 
   const signOut = useCallback(() => {
+    appendEvent("participant", { type: "sign_out" });
     save("operator", null);
     setOperator(null);
     setAssignment(null);

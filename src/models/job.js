@@ -26,6 +26,15 @@ export function missingDocs(job) {
   return missing;
 }
 
+/**
+ * Welding wire and shielding gas from the assembly's WPS, for the start checklist.
+ * Out: { wire, gas, file } or null when the WPS is missing or has no consumables.
+ */
+export function wpsConsumables(job) {
+  if (!job?.wps?.wire || !job?.wps?.gas) return null;
+  return { wire: job.wps.wire, gas: job.wps.gas, file: job.wps.file };
+}
+
 export function isReady(job) {
   return missingDocs(job).length === 0;
 }

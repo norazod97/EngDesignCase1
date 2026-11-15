@@ -16,11 +16,12 @@ export function WpsModal({ job, onClose }) {
       <dl className="spec">
         <dt>Joint</dt><dd>{job.tags.geometry}, butt joint, {job.tags.bevel}-bevel</dd>
         <dt>Base metal</dt><dd>{job.tags.material}</dd>
-        <dt>Process</dt><dd>GMAW (135), short-circuit / pulsed</dd>
-        <dt>Filler</dt><dd>G3Si1 Ø1.0 mm</dd>
-        <dt>Shielding gas</dt><dd>Ar + 18 % CO₂, 14 l/min</dd>
-        <dt>Current / voltage</dt><dd>190–230 A / 23–26 V</dd>
-        <dt>Travel speed</dt><dd>5.5–6.5 mm/s</dd>
+        {/* Values come from the assembly's WPS data (src/mock/fixtures.js). */}
+        <dt>Process</dt><dd>{job.wps.process}</dd>
+        <dt>Welding wire</dt><dd>{job.wps.wire}</dd>
+        <dt>Shielding gas</dt><dd>{job.wps.gas}, {job.wps.gasFlow}</dd>
+        <dt>Current / voltage</dt><dd>{job.wps.current} / {job.wps.voltage}</dd>
+        <dt>Travel speed</dt><dd>{job.wps.travelSpeed}</dd>
       </dl>
       <p className="muted"><Tag>Simulation</Tag> Parameters are placeholders, not a qualified procedure.</p>
     </Modal>

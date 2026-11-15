@@ -1,15 +1,26 @@
 import { useEffect, useState } from "react";
 import { useCell } from "../../controllers/CellController.jsx";
-import { missingDocs } from "../../models/job.js";
+import { missingDocs, wpsConsumables } from "../../models/job.js";
 import { Icon } from "../components/Icon.jsx";
 import { Modal } from "../components/overlays.jsx";
 import { Button, Checkbox } from "../components/primitives.jsx";
 
 const CHECKS = [
-  { id: "equipment", label: "The right equipment is in the cell", description: "Wire, gas and torch match the WPS." },
+  { id: "equipment", label: "Welding wire and shielding gas match the WPS." },
   { id: "clean", label: "Parts and equipment are clean", description: "Wiped with solvent, no oil or debris." },
   { id: "dry", label: "Parts are dry", description: "No moisture or condensation." },
 ];
+
+/** Wire and gas from the WPS, shown big enough to compare with the spool and bottle labels. */
+function WpsConsumables({ wire, gas, file }) {
+  return (
+    <span className="wps-consumables">
+      <span><small>Welding wire</small><strong>{wire}</strong></span>
+      <span><small>Shielding gas</small><strong>{gas}</strong></span>
+      <span className="muted">From {file}</span>
+    </span>
+  );
+}
 
 /**
  * Guided preparation before starting: checklist → load bin → lock cell →
@@ -26,6 +37,9 @@ export function PrepareCellModal({ open, jobs, onClose, onStarted }) {
   useEffect(() => { if (open) { setStep(0); setChecks([]); setLoaded(false); setError(""); } }, [open]);
 
   const STEPS = ["Check", "Load parts", "Lock cell", "Start"];
+
+  // Wire and gas read from the WPS of the assembly being started.
+  const consumables = wpsConsumables(jobs[0]);
   const canNext = [checks.length === CHECKS.length, loaded && state.bin.inEnvelope, state.door.locked, true][step];
 
   function start() {
@@ -49,7 +63,10 @@ export function PrepareCellModal({ open, jobs, onClose, onStarted }) {
       {step === 0 && (
         <div className="stack">
           {CHECKS.map((c) => (
-            <Checkbox key={c.id} label={c.label} description={c.description} checked={checks.includes(c.id)}
+            <Checkbox key={c.id} label={c.label} checked={checks.includes(c.id)}
+              description={c.id === "equipment" && consumables
+                ? <WpsConsumables {...consumables} />
+                : c.description}
               onChange={(on) => setChecks((x) => (on ? [...x, c.id] : x.filter((y) => y !== c.id)))} />
           ))}
         </div>

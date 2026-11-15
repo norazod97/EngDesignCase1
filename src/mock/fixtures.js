@@ -75,16 +75,20 @@ const engineer = { name: "Ir. Sofia Bianchi", email: "s.bianchi@example.com", ph
 // study schedule and the wizard (docs/PLAN.md section 1).
 // Each assembly has its CAD drawing (.step) and its welding procedure (WPS, PDF),
 // both named after the weld ID (e.g. WPS-W-52-1101-rev1.pdf).
-const docs = (n) => ({ cad: { file: `${n}.step` }, wps: { file: `WPS-${n}-rev1.pdf`, hasNote: false } });
+// The WPS content is structured data (like a WPS from welding-management software),
+// so the app can show the wire and gas in the start checklist. Values are placeholders.
+const GMAW_WPS = { process: "GMAW (135), short-circuit / pulsed", wire: "G3Si1 Ø1.0 mm", gas: "Ar + 18 % CO₂ (M21)", gasFlow: "14 l/min", current: "190–230 A", voltage: "23–26 V", travelSpeed: "5.5–6.5 mm/s" };
+const WAAM_WPS = { process: "WAAM, CMT (GMAW 135)", wire: "G3Si1 Ø1.2 mm", gas: "Ar + 18 % CO₂ (M21)", gasFlow: "15 l/min", current: "140–180 A", voltage: "14–17 V", travelSpeed: "8–10 mm/s" };
+const docs = (n, wps = GMAW_WPS) => ({ cad: { file: `${n}.step` }, wps: { file: `WPS-${n}-rev1.pdf`, hasNote: false, ...wps } });
 export const JOBS = [
   { id: "GMAW-A1", name: "Bracket", weldNo: "W-52-1101", tags: { geometry: "Plate-to-plate", material: "S355 steel", bevel: "V" }, ...docs("W-52-1101"), commissioner: engineer, cellId: "52" },
   { id: "GMAW-A2", name: "Flange", weldNo: "W-52-1102", tags: { geometry: "Tube-to-plate", material: "S355 steel", bevel: "V" }, ...docs("W-52-1102"), commissioner: engineer, cellId: "52" },
   { id: "GMAW-A3", name: "Frame corner", weldNo: "W-52-1103", tags: { geometry: "T-joint", material: "S355 steel", bevel: "none" }, ...docs("W-52-1103"), commissioner: engineer, cellId: "52" },
   { id: "GMAW-A4", name: "Gusset", weldNo: "W-52-1104", tags: { geometry: "Plate-to-plate", material: "S355 steel", bevel: "V" }, ...docs("W-52-1104"), commissioner: engineer, cellId: "52" },
-  { id: "WAAM-A1", name: "Shaft", weldNo: "R-21-2201", tags: { geometry: "Worn shaft", material: "Low-alloy steel", bevel: "-" }, ...docs("R-21-2201"), commissioner: engineer, cellId: "21" },
-  { id: "WAAM-A2", name: "Mould insert", weldNo: "R-21-2202", tags: { geometry: "Chipped edge", material: "Tool steel", bevel: "-" }, ...docs("R-21-2202"), commissioner: engineer, cellId: "21" },
-  { id: "WAAM-A3", name: "Pump impeller", weldNo: "R-21-2203", tags: { geometry: "Eroded blade", material: "Stainless steel", bevel: "-" }, ...docs("R-21-2203"), commissioner: engineer, cellId: "21" },
-  { id: "WAAM-A4", name: "Flange", weldNo: "R-21-2204", tags: { geometry: "Worn face", material: "S355 steel", bevel: "-" }, ...docs("R-21-2204"), commissioner: engineer, cellId: "21" },
+  { id: "WAAM-A1", name: "Shaft", weldNo: "R-21-2201", tags: { geometry: "Worn shaft", material: "Low-alloy steel", bevel: "-" }, ...docs("R-21-2201", { ...WAAM_WPS, wire: "G4Si1 Ø1.2 mm" }), commissioner: engineer, cellId: "21" },
+  { id: "WAAM-A2", name: "Mould insert", weldNo: "R-21-2202", tags: { geometry: "Chipped edge", material: "Tool steel", bevel: "-" }, ...docs("R-21-2202", { ...WAAM_WPS, wire: "Tool-steel filler Ø1.2 mm" }), commissioner: engineer, cellId: "21" },
+  { id: "WAAM-A3", name: "Pump impeller", weldNo: "R-21-2203", tags: { geometry: "Eroded blade", material: "Stainless steel", bevel: "-" }, ...docs("R-21-2203", { ...WAAM_WPS, wire: "G 19 9 L Si Ø1.2 mm", gas: "Ar + 2 % CO₂ (M12)" }), commissioner: engineer, cellId: "21" },
+  { id: "WAAM-A4", name: "Flange", weldNo: "R-21-2204", tags: { geometry: "Worn face", material: "S355 steel", bevel: "-" }, ...docs("R-21-2204", WAAM_WPS), commissioner: engineer, cellId: "21" },
 ];
 
 export const STOCK = [

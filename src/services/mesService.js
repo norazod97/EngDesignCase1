@@ -3,6 +3,7 @@
 // NOT secure authentication: credentials are client-side demo data.
 
 import { COLLEAGUES, JOBS, OPERATORS, SHIFTS, STOCK } from "../mock/fixtures.js";
+import STUDY_DESIGN from "../data/study/study-design.json";
 
 const delay = (ms = 150) => new Promise((r) => setTimeout(r, ms));
 const clone = (x) => structuredClone(x);
@@ -22,11 +23,17 @@ export async function getOperator(operatorId) {
   return clone(profile);
 }
 
+/**
+ * The cell this operator works in, plus the study assemblies for that cell.
+ * The number of assemblies comes from the study design (assemblies_per_process, now 4).
+ */
 export async function getShiftAssignment(operatorId) {
   await delay();
   const shift = SHIFTS[operatorId];
   if (!shift) return null;
-  return { shift: clone(shift), jobs: clone(JOBS.filter((j) => j.cellId === shift.cellId)) };
+  const perProcess = STUDY_DESIGN.design?.assemblies_per_process ?? 4;
+  const jobs = JOBS.filter((j) => j.cellId === shift.cellId).slice(0, perProcess);
+  return { shift: clone(shift), jobs: clone(jobs) };
 }
 
 export async function getColleaguesOnShift() {

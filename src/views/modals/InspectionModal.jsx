@@ -21,7 +21,7 @@ export function InspectionModal({ item, onClose }) {
   }
 
   return (
-    <Modal open size="lg" title={`Visual NDT · ${item.id}`} eyebrow="Your check" onClose={onClose}
+    <Modal open size="lg" title={`Check · ${item.job?.name ?? item.id}`} eyebrow="Your check" onClose={onClose}
       footer={<><Button variant="ghost" onClick={onClose}>Later</Button><Button variant="accent" size="lg" icon="check" disabled={!verdict || (disagrees && !comment.trim())} onClick={confirm}>Save my check</Button></>}>
       <div className="inspect">
         <figure className="scan-mock" aria-label="3D scan of the weld bead (simulated)">

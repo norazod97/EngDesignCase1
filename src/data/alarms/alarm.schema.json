@@ -94,6 +94,10 @@
         "title": {
           "$ref": "#/$defs/text"
         },
+        "operator_title": {
+          "description": "Neutral headline shown to the participant. Must not reveal the cause or whether the AI is right. 'title' is the researcher's label and is never shown.",
+          "$ref": "#/$defs/text"
+        },
         "severity": {
           "enum": [
             "info",

@@ -3,12 +3,9 @@ import { useSession } from "../../controllers/SessionController.jsx";
 import { Icon } from "../components/Icon.jsx";
 import { Avatar, Button } from "../components/primitives.jsx";
 
+// Menu links. Shift, Event log, Label defects and My profile are parked for the study (PLAN T1).
 const LINKS = [
-  { to: "/shift", label: "My shift", icon: "home" },
   { to: "/dashboard", label: "Cell dashboard", icon: "grid" },
-  { to: "/historian", label: "Event log", icon: "history" },
-  { to: "/labeling", label: "Label defects", icon: "tag" },
-  { to: "/account", label: "My profile", icon: "user" },
 ];
 
 export function SideMenu({ open, onNavigate }) {
@@ -20,7 +17,7 @@ export function SideMenu({ open, onNavigate }) {
         <div>
           <strong>{operator.name}</strong>
           <small>{operator.role}</small>
-          {shift && <small>Cell {shift.cellId} · Area {shift.area}</small>}
+          {shift && <small>{shift.process} · Cell {shift.cellId}</small>}
         </div>
       </div>
       <ul>

@@ -65,7 +65,7 @@ export function PrepareCellModal({ open, jobs, onClose, onStarted }) {
               {!state.bin.inEnvelope && <p>Push the bin back onto the marked spot on the floor.</p>}
             </div>
           </div>
-          <ul className="job-mini">{jobs.map((j) => <li key={j.id}><span className="mono">{j.id}</span> — {j.tags.geometry}, {j.tags.material}</li>)}</ul>
+          <ul className="job-mini">{jobs.map((j) => <li key={j.id}><strong>{j.name ?? j.id}</strong> — {j.tags.geometry}, {j.tags.material}</li>)}</ul>
           <Checkbox label="I have loaded the parts into the bin" checked={loaded} onChange={setLoaded} />
         </div>
       )}
@@ -83,8 +83,8 @@ export function PrepareCellModal({ open, jobs, onClose, onStarted }) {
 
       {step === 3 && (
         <div className="stack">
-          <p className="lead">Everything is ready. The cell will weld these assemblies one after the other and call you if it needs help.</p>
-          <ol className="job-mini">{jobs.map((j) => <li key={j.id}><span className="mono">{j.id}</span></li>)}</ol>
+          <p className="lead">Everything is ready. The cell will start this assembly and call you if it needs help.</p>
+          <ol className="job-mini">{jobs.map((j) => <li key={j.id}><strong>{j.name ?? j.id}</strong></li>)}</ol>
           {jobs.some((j) => missingDocs(j).length) && (
             <div className="callout callout-warning">
               <Icon name="file" />

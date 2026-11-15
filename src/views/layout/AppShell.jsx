@@ -55,7 +55,8 @@ export function AppShell() {
       {panel === "messages" && <MessagesPanel onClose={() => setPanel(null)} />}
       <HelpModal open={panel === "help"} context={helpContext} onClose={() => { setPanel(null); setHelpContext(null); }} onSend={sendHelp} />
 
-      <SbarAlarmModal onRequestHelp={requestHelp} />
+      {/* Alarm window: opens by itself when the cell has an alarm (PLAN section 2). */}
+      <SbarAlarmModal />
       <ToastStack toasts={toasts} onDismiss={dismissToast} />
 
       {/* Mobile: the stop control moves to a fixed bottom bar so it is always reachable. */}

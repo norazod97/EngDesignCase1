@@ -7,13 +7,13 @@ import { ProcessTracker } from "../widgets/ProcessTracker.jsx";
 export function StatusBar() {
   const { shift } = useSession();
   const { state } = useCell();
-  const { total, finished, active, cycle } = useCellSummary();
+  const { total, finished, active, cycle, steps, jobName, cellName } = useCellSummary();
 
   return (
     <div className="statusbar" role="region" aria-label="Shift status">
       <div className="statusbar-item">
-        <span className="statusbar-label">Shift</span>
-        <strong>{shift ? `${shift.start}–${shift.end}` : "—"}</strong>
+        <span className="statusbar-label">Cell</span>
+        <strong>{cellName ?? (shift ? `Cell ${shift.cellId}` : "—")}</strong>
       </div>
       <div className="statusbar-item">
         <span className="statusbar-label">Assemblies</span>
@@ -23,7 +23,7 @@ export function StatusBar() {
         <Icon name={state.door.locked ? "lock" : "unlock"} />
         <strong>{state.door.locked ? "Cell locked" : "Cell unlocked"}</strong>
       </div>
-      {active && <div className="statusbar-tracker"><ProcessTracker cycle={cycle} compact /></div>}
+      {active && <div className="statusbar-tracker"><ProcessTracker cycle={cycle} steps={steps} jobName={jobName} compact /></div>}
     </div>
   );
 }

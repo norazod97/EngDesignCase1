@@ -1,4 +1,4 @@
-import { CycleState, PROCESS_STEPS } from "../../models/cellModel.js";
+import { CycleState } from "../../models/cellModel.js";
 import { Icon } from "../components/Icon.jsx";
 import { ProgressBar } from "../components/primitives.jsx";
 
@@ -8,23 +8,27 @@ const STATE_TEXT = {
   [CycleState.HALTED]: "Halted — needs you",
   [CycleState.WAITING]: "Waiting for documents",
   [CycleState.STOPPED]: "Stopped",
-  [CycleState.COMPLETE]: "All done",
+  [CycleState.COMPLETE]: "Assembly done",
   [CycleState.IDLE]: "Not started",
 };
 
-/** Assembly in progress + step-by-step tracker (shown while a cycle is active). */
-export function ProcessTracker({ cycle, compact = false }) {
+/**
+ * Assembly in progress + step-by-step tracker (shown while a cycle is active).
+ * In: cycle (from the cell model), steps (this cell's process steps),
+ *     jobName (neutral assembly name), compact (small version for the status bar).
+ */
+export function ProcessTracker({ cycle, steps, jobName, compact = false }) {
   const { currentJobId, stepIndex, stepProgress, state } = cycle;
-  const step = PROCESS_STEPS[stepIndex];
+  const step = steps[stepIndex];
   return (
     <div className={`tracker tracker-${state} ${compact ? "tracker-compact" : ""}`}>
       <div className="tracker-head">
         <span className="tracker-label">Now in the cell</span>
-        <strong className="tracker-job">{currentJobId ?? cycle.blocker?.jobId ?? "—"}</strong>
+        <strong className="tracker-job">{jobName ?? "—"}</strong>
         <span className={`tracker-state state-${state}`}>{STATE_TEXT[state]}</span>
       </div>
       <ol className="tracker-steps">
-        {PROCESS_STEPS.map((s, i) => {
+        {steps.map((s, i) => {
           const status = !currentJobId ? "todo" : i < stepIndex ? "done" : i === stepIndex ? "current" : "todo";
           return (
             <li key={s.id} className={`tracker-step is-${status}`} aria-current={status === "current" ? "step" : undefined}>
@@ -34,7 +38,7 @@ export function ProcessTracker({ cycle, compact = false }) {
           );
         })}
       </ol>
-      {!compact && currentJobId && (
+      {!compact && currentJobId && step && (
         <div className="tracker-detail">
           {!step.operator && <ProgressBar value={stepProgress} label={`${step.label} progress`} />}
           <p>{step.hint}</p>

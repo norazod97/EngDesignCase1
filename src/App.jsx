@@ -8,8 +8,9 @@ import { SessionController, useSession } from "./controllers/SessionController.j
 import { AppShell } from "./views/layout/AppShell.jsx";
 import { DashboardPage } from "./views/pages/DashboardPage.jsx";
 import { LoginPage } from "./views/pages/LoginPage.jsx";
-import { AccountPage, HistorianPage, LabelingPage, NotFoundPage } from "./views/pages/OtherPages.jsx";
-import { ShiftPage } from "./views/pages/ShiftPage.jsx";
+// parked for the study (PLAN T1): AccountPage, HistorianPage, LabelingPage, ShiftPage.
+// Their files stay in views/pages; add the routes back below to use them again.
+import { NotFoundPage } from "./views/pages/OtherPages.jsx";
 import { WizardPage } from "./views/pages/WizardPage.jsx";
 
 function AuthenticatedApp() {
@@ -38,12 +39,10 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/wizard" element={<WizardPage />} />
           <Route element={<AuthenticatedApp />}>
-            <Route index element={<Navigate to="/shift" replace />} />
-            <Route path="/shift" element={<ShiftPage />} />
+            {/* After login the operator lands on the dashboard with the assembly list. */}
+            <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/historian" element={<HistorianPage />} />
-            <Route path="/labeling" element={<LabelingPage />} />
-            <Route path="/account" element={<AccountPage />} />
+            {/* parked: /shift, /historian, /labeling, /account (PLAN T1) */}
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

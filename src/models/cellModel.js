@@ -18,17 +18,40 @@ export const CycleState = Object.freeze({
   COMPLETE: "complete", // queue finished
 });
 
-// GMAW steps. Ids match the step keys used in src/data/alarms (trigger.step).
-// operator: true = the cell waits here until the operator acts.
-export const PROCESS_STEPS = [
-  { id: "load", label: "Pick & align", hint: "Robots 1 and 2 pick the parts and hold them together." },
-  { id: "seam_scan", label: "Find the seam", hint: "The profilometer finds the seam." },
-  { id: "dry_run", label: "Dry run", hint: "The torch follows the path without welding." },
-  { id: "ready", label: "Ready to weld", hint: "Check the path, then press Weld.", operator: true },
-  { id: "weld", label: "Weld", hint: "The welding robot follows the seam." },
-  { id: "post_scan", label: "AI inspection", hint: "The AI checks the bead." },
-  { id: "ndt", label: "Visual NDT", hint: "Look at the weld and record OK or NOT OK.", operator: true },
-];
+// The steps of each process. Ids match the step keys used in src/data/alarms (trigger.step).
+// Flags on a step:
+//   operator: true -> the cell waits here until the operator acts.
+//   arc: true      -> the arc is on (weld signals are shown).
+//   scan: true     -> the AI inspection that ends with an OK / NOT OK result.
+//   action         -> label of the button the operator presses at a "ready" step.
+// "ready" and "ndt" are used by both processes, so the dashboard can treat them the same.
+export const STEPS_BY_PROCESS = {
+  GMAW: [
+    { id: "load", label: "Pick & align", hint: "Robots 1 and 2 pick the parts and hold them together." },
+    { id: "seam_scan", label: "Find the seam", hint: "The profilometer finds the seam." },
+    { id: "dry_run", label: "Dry run", hint: "The torch follows the path without welding." },
+    { id: "ready", label: "Ready to weld", hint: "Check the path, then press Weld.", operator: true, action: "Weld" },
+    { id: "weld", label: "Weld", hint: "The welding robot follows the seam.", arc: true },
+    { id: "post_scan", label: "AI inspection", hint: "The AI checks the bead.", scan: true },
+    { id: "ndt", label: "Visual NDT", hint: "Look at the weld and record OK or NOT OK.", operator: true },
+  ],
+  // WAAM: placeholder steps until the full WAAM screens are built (PLAN task T14/T15).
+  WAAM: [
+    { id: "mount", label: "Mount part", hint: "The damaged part is clamped on the table." },
+    { id: "scan", label: "Scan part", hint: "The scanner measures the part." },
+    { id: "confirm_regions", label: "Find damage", hint: "The scan is compared with the CAD of the intact part." },
+    { id: "params", label: "Plan build", hint: "The build path and layers are planned." },
+    { id: "ready", label: "Ready to build", hint: "Check the plan, then press Build.", operator: true, action: "Build" },
+    { id: "build", label: "Build layers", hint: "The robot adds metal layer by layer.", arc: true },
+    { id: "final_scan", label: "Final scan", hint: "The AI compares the new shape with the CAD.", scan: true },
+    { id: "ndt", label: "NDT check", hint: "Check the repaired area and record OK or NOT OK.", operator: true },
+  ],
+};
+
+/** Steps for a process ("GMAW" or "WAAM"). Unknown process -> GMAW steps. */
+export function stepsFor(process) {
+  return STEPS_BY_PROCESS[process] ?? STEPS_BY_PROCESS.GMAW;
+}
 
 /** Cycle states in which the Stop button is available. */
 export const STOPPABLE_STATES = [CycleState.RUNNING, CycleState.AWAITING_OPERATOR, CycleState.HALTED, CycleState.WAITING];
@@ -40,6 +63,8 @@ export function createCellState(cell) {
     cellId: cell.id,
     area: cell.area,
     name: cell.name,
+    process: cell.process, // "GMAW" or "WAAM"
+    steps: stepsFor(cell.process), // the steps this cell goes through for each assembly
     equipment: cell.equipment.map((e) => ({ ...e, status: EquipmentStatus.IDLE })),
     door: { locked: false },
     bin: { inEnvelope: true },
@@ -144,19 +169,19 @@ export function cellReducer(state, event) {
     case "cycle/nextStep": {
       const stepIndex = state.cycle.stepIndex + 1;
       const s = { ...state, cycle: { ...state.cycle, stepIndex, stepProgress: 0 } };
-      return withLog(s, EventCategory.PROCESS, `${state.cycle.currentJobId}: ${PROCESS_STEPS[stepIndex]?.label ?? "step"} started.`);
+      return withLog(s, EventCategory.PROCESS, `${state.cycle.currentJobId}: ${state.steps[stepIndex]?.label ?? "step"} started.`);
     }
 
     case "cycle/await": {
       const s = setEquipment({ ...state, cycle: { ...state.cycle, state: CycleState.AWAITING_OPERATOR } }, allIdle);
-      return withLog(s, EventCategory.PROCESS, `${state.cycle.currentJobId}: waiting for operator (${PROCESS_STEPS[state.cycle.stepIndex]?.label}).`);
+      return withLog(s, EventCategory.PROCESS, `${state.cycle.currentJobId}: waiting for operator (${state.steps[state.cycle.stepIndex]?.label}).`);
     }
 
     case "cycle/operatorConfirm": {
       const stepIndex = state.cycle.stepIndex + 1;
       let s = { ...state, cycle: { ...state.cycle, state: CycleState.RUNNING, stepIndex, stepProgress: 0 } };
       s = setEquipment(s, allRunning);
-      return withLog(s, EventCategory.OPERATOR, `${state.cycle.currentJobId}: operator confirmed "${PROCESS_STEPS[state.cycle.stepIndex]?.label}".`, { by: p.by });
+      return withLog(s, EventCategory.OPERATOR, `${state.cycle.currentJobId}: operator confirmed "${state.steps[state.cycle.stepIndex]?.label}".`, { by: p.by });
     }
 
     case "cycle/jobScanned": {
@@ -233,7 +258,7 @@ export function cellReducer(state, event) {
       let s = setJob(state, p.jobId, { status: finalStatus, review: { operatorVerdict: p.operatorVerdict, agreesWithAi: agree, comment: p.comment, by: p.by } });
       s = withLog(s, EventCategory.QUALITY, `${p.jobId}: visual NDT ${p.operatorVerdict === "ok" ? "OK" : "NOT OK"} (${agree ? "agrees" : "disagrees"} with AI).`, { by: p.by, comment: p.comment });
       // Visual NDT of the current assembly finishes it; the cell moves on.
-      const atNdt = PROCESS_STEPS[state.cycle.stepIndex]?.id === "ndt";
+      const atNdt = state.steps[state.cycle.stepIndex]?.id === "ndt";
       if (p.jobId === state.cycle.currentJobId && atNdt && state.cycle.state === CycleState.AWAITING_OPERATOR) s = loadNextJob(s);
       return s;
     }

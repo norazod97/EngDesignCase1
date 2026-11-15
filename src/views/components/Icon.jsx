@@ -33,6 +33,7 @@ const PATHS = {
   phone: "M5 3h4l2 5-3 2a11 11 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2Z",
   note: "M5 3h14v18H5zM9 8h6M9 12h6M9 16h3",
   wand: "M4 20 16 8M14 4v2M18 8h2M18 4l-1.5 1.5M20 12l-1.5-1.5",
+  clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2",
 };
 
 export function Icon({ name, size = 22, label, className = "", strokeWidth = 1.8 }) {

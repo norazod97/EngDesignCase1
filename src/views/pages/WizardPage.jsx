@@ -2,7 +2,9 @@
 // tab of the same browser; it drives the simulated cell in the participant tab.
 import { useEffect, useRef, useState } from "react";
 import { createWizardChannel } from "../../services/wizardChannel.js";
-import { ALARM_TEMPLATES, AI_ADJUSTMENTS } from "../../mock/scenarios.js";
+import { AI_ADJUSTMENTS } from "../../mock/scenarios.js";
+// The wizard is the researcher's tool, so it reads the alarm database directly.
+import { listAlarms } from "../../services/alarmRepository.js";
 import { EquipmentStatus } from "../../models/equipment.js";
 import { formatTime } from "../../models/job.js";
 import { Button, Card, StatusLamp, Switch } from "../components/primitives.jsx";
@@ -19,6 +21,9 @@ export function WizardPage() {
   const [chat, setChat] = useState([]);
   const [reply, setReply] = useState("");
   const [aiText, setAiText] = useState(AI_ADJUSTMENTS[0]);
+  // Resolution script: how many steps were already sent for the current alarm.
+  const [sent, setSent] = useState({ alarmAt: null, count: 0 });
+  const [helpNote, setHelpNote] = useState(null); // "Participant opened help" banner
 
   useEffect(() => {
     document.title = "Wizard console · COROB";
@@ -26,6 +31,7 @@ export function WizardPage() {
     const off = channel.current.listen((msg) => {
       if (msg?.type === "state") setSnap(msg);
       if (msg?.type === "chat" && msg.from === "operator") setChat((c) => [...c, { from: "operator", text: msg.text, at: new Date().toISOString() }]);
+      if (msg?.type === "help-opened") setHelpNote({ ...msg, at: new Date().toISOString() });
     });
     channel.current.post({ type: "hello" });
     return () => { off(); channel.current.close(); };
@@ -42,6 +48,18 @@ export function WizardPage() {
   const s = snap?.state;
   const sim = snap?.sim;
 
+  // Alarms for the connected cell's process (GMAW or WAAM), grouped by knowledge domain.
+  const alarms = listAlarms(s?.process);
+  const active = s?.activeAlarm ?? null;
+  const script = active?.resolutionScript ?? [];
+  // Reset the "sent" counter when a new alarm starts.
+  const sentCount = sent.alarmAt === active?.raisedAt ? sent.count : 0;
+  function sendSteps(n) {
+    const steps = script.slice(sentCount, sentCount + n);
+    steps.forEach((step, i) => say(`Step ${sentCount + i + 1}: ${step}`));
+    setSent({ alarmAt: active.raisedAt, count: sentCount + steps.length });
+  }
+
   return (
     <div className="wizard">
       <header className="wizard-head">
@@ -51,12 +69,30 @@ export function WizardPage() {
       </header>
 
       <div className="wizard-grid">
-        <Card title="Alarms (SBAR)">
+        <Card title={`Alarms · ${s?.process ?? "sign in first"}`}>
           <div className="stack">
-            {Object.values(ALARM_TEMPLATES).map((a) => (
-              <Button key={a.id} variant={a.halts ? "danger" : "ink"} onClick={() => cmd("alarm", { id: a.id })}>{a.halts ? "HALT · " : "WARN · "}{a.situation}</Button>
+            {alarms.map((a) => (
+              <Button key={a.id} variant={a.halts ? "danger" : "ink"} onClick={() => cmd("alarm", { id: a.id })}>
+                {a.halts ? "HALT" : "WARN"} · {a.id} · {a.title}
+              </Button>
             ))}
           </div>
+        </Card>
+
+        <Card title="Active alarm · resolution script">
+          {!active ? <p className="muted">No active alarm.</p> : (
+            <div className="stack">
+              <p><strong>{active.errorCode}</strong> · {active.id} · {active.title}</p>
+              {helpNote?.alarmId === active.id && <p className="tag tag-warning">Participant opened help ({helpNote.channel}) at {formatTime(helpNote.at)}</p>}
+              <ol className="wizard-script">
+                {script.map((step, i) => <li key={i} className={i < sentCount ? "is-sent" : ""}>{step}</li>)}
+              </ol>
+              <div className="row wrap">
+                <Button variant="accent" disabled={sentCount >= script.length} onClick={() => sendSteps(1)}>Send next step ({Math.min(sentCount + 1, script.length)}/{script.length})</Button>
+                <Button variant="ink" disabled={sentCount >= script.length} onClick={() => sendSteps(script.length)}>Send all</Button>
+              </div>
+            </div>
+          )}
         </Card>
 
         <Card title="AI events">

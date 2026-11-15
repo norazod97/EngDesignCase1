@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import { useCellSummary } from "../../controllers/CellController.jsx";
 import { useNotifications } from "../../controllers/NotificationController.jsx";
 import { useSession } from "../../controllers/SessionController.jsx";
@@ -25,13 +24,14 @@ export function Navbar({ onToggleMenu, menuOpen, panel, onPanel, onStopRequest }
     <header className="navbar">
       <div className="navbar-left">
         <IconButton icon={menuOpen ? "close" : "menu"} label={menuOpen ? "Close menu" : "Open menu"} onClick={onToggleMenu} aria-expanded={menuOpen} aria-controls="side-menu" />
-        <Link to="/account" className="navbar-profile" aria-label="My profile">
+        {/* Profile page is parked (PLAN T1), so this is plain text, not a link. */}
+        <div className="navbar-profile">
           <Avatar name={operator.name} size={40} />
           <span className="navbar-profile-text">
             <strong>{operator.firstName}</strong>
             <small>{operator.badge}</small>
           </span>
-        </Link>
+        </div>
       </div>
 
       <div className="navbar-center">

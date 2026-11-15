@@ -1,4 +1,6 @@
 // Scripted events the Wizard-of-Oz console can inject into the simulation.
+// parked: ALARM_TEMPLATES are the old demo alarms. The app now uses the JSON
+// alarm database (src/data/alarms via services/alarmRepository.js).
 // Alarms follow SBAR: Situation, Background, Assessment, Recommendation.
 
 export const ALARM_TEMPLATES = {

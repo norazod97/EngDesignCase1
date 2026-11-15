@@ -6,6 +6,10 @@ import { wizardChannel } from "./CellController.jsx";
 
 const AssistantContext = createContext(null);
 
+// Unique id for each chat message (several can arrive in the same millisecond).
+let messageCounter = 0;
+const nextId = () => `${Date.now()}-${++messageCounter}`;
+
 const FALLBACK =
   "I can't reach the knowledge base right now. You can ask your supervisor using the Help button at the top.";
 
@@ -20,20 +24,20 @@ export function AssistantController({ children }) {
     if (msg?.type === "chat" && msg.from === "assistant") {
       clearTimeout(fallbackTimer.current);
       setTyping(false);
-      setMessages((m) => [...m, { id: `${Date.now()}`, from: "assistant", text: msg.text, at: new Date().toISOString() }]);
+      setMessages((m) => [...m, { id: nextId(), from: "assistant", text: msg.text, at: new Date().toISOString() }]);
     }
     if (msg?.type === "chat-typing") setTyping(!!msg.on);
   }), []);
 
   const ask = useCallback((text) => {
-    const entry = { id: `${Date.now()}`, from: "operator", text, at: new Date().toISOString() };
+    const entry = { id: nextId(), from: "operator", text, at: new Date().toISOString() };
     setMessages((m) => [...m, entry]);
     setTyping(true);
     wizardChannel.post({ type: "chat", from: "operator", text });
     clearTimeout(fallbackTimer.current);
     fallbackTimer.current = setTimeout(() => {
       setTyping(false);
-      setMessages((m) => [...m, { id: `${Date.now()}`, from: "assistant", text: FALLBACK, at: new Date().toISOString() }]);
+      setMessages((m) => [...m, { id: nextId(), from: "assistant", text: FALLBACK, at: new Date().toISOString() }]);
     }, wizardChannel.available ? 45000 : 1500);
   }, []);
 

@@ -14,7 +14,7 @@ export function LoginPage() {
   const idRef = useRef(null);
 
   useEffect(() => { idRef.current?.focus(); document.title = `Sign in · ${APP_CONFIG.appName}`; }, []);
-  if (operator) return <Navigate to={location.state?.from ?? "/shift"} replace />;
+  if (operator) return <Navigate to={location.state?.from ?? "/dashboard"} replace />;
 
   async function submit(e) {
     e.preventDefault();
@@ -35,7 +35,7 @@ export function LoginPage() {
         <h1>Sign in</h1>
         <p className="muted">Use your operator ID and password.</p>
         <Field label="Operator ID" id="op-id">
-          <Input ref={idRef} id="op-id" icon="user" autoComplete="username" value={id} onChange={(e) => setId(e.target.value)} placeholder="e.g. jack" required />
+          <Input ref={idRef} id="op-id" icon="user" autoComplete="username" value={id} onChange={(e) => setId(e.target.value)} placeholder="e.g. operator1" required />
         </Field>
         <Field label="Password" id="op-pw" error={error}>
           <Input id="op-pw" icon="lock" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
@@ -43,7 +43,7 @@ export function LoginPage() {
         <Button type="submit" variant="accent" size="lg" block iconRight="chevronRight" disabled={busy || !id || !password}>
           {busy ? "Signing in…" : "Sign in"}
         </Button>
-        <p className="login-demo"><strong>Simulation</strong> — demo accounts: <code>jack / weld123</code>, <code>operator2 / weld456</code>. Not connected to real equipment.</p>
+        <p className="login-demo"><strong>Simulation</strong> — demo accounts: <code>operator1 / weld123</code> (GMAW cell), <code>operator2 / weld456</code> (WAAM cell). Not connected to real equipment.</p>
       </form>
     </div>
   );

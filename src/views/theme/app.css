@@ -434,3 +434,42 @@ button, input, textarea, select { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ---- Assembly list (dashboard, PLAN T1b) ---------------------------------- */
+.assembly-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.assembly { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 14px; min-height: 72px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.assembly.is-next { border-color: var(--accent); background: var(--accent-tint); }
+.assembly.is-done { opacity: .75; }
+.assembly-dot { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--field); font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-lg); }
+.assembly.is-done .assembly-dot { background: var(--lamp-positive); color: #fff; }
+.assembly.is-next .assembly-dot { background: var(--ink); color: #fff; }
+.assembly-name { display: grid; gap: 2px; }
+.assembly-name strong { font-size: var(--fs-lg); }
+.assembly-name small { color: var(--ink-muted); }
+@media (max-width: 640px) {
+  .assembly { grid-template-columns: auto 1fr; }
+  .assembly .btn { grid-column: 1 / -1; }
+}
+
+/* ---- Alarm flow (PLAN section 2, tasks T7-T9) ----------------------------- */
+.flow-timer { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 8px 14px; border-radius: var(--radius); background: var(--ink); color: #fff; font-family: var(--font-mono); text-transform: uppercase; }
+.flow-timer strong { font-size: 1.5rem; letter-spacing: .05em; }
+.flow-question { margin-top: 6px; font-size: 1.5rem; }
+.flow-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.flow-choice { display: grid; justify-items: center; gap: 6px; min-height: 140px; padding: 16px 12px; border: 2px solid var(--ink); border-radius: var(--radius); background: var(--surface); color: var(--ink); text-align: center; cursor: pointer; font-family: var(--font-mono); }
+.flow-choice strong { font-size: 1.5rem; text-transform: uppercase; line-height: 1.15; }
+.flow-choice small { font-family: var(--font-sans); font-size: var(--fs-sm); color: var(--ink-muted); }
+.flow-choice:hover, .flow-choice:focus-visible { background: var(--accent-tint); border-color: var(--accent); }
+.flow-choice-help { border-color: var(--ai); }
+.flow-choice-help .icon { color: var(--ai); }
+.flow-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
+.flow-actions .btn { min-height: 64px; font-size: var(--fs-lg); }
+.flow-chat { max-height: 300px; min-height: 140px; overflow-y: auto; padding: 10px; border: 1.5px solid var(--line); border-radius: var(--radius); }
+.chip-lg { min-height: 48px; font-size: var(--fs-md); }
+@media (max-width: 720px) {
+  .flow-choices { grid-template-columns: 1fr; }
+  .flow-choice { min-height: 96px; }
+  .flow-actions .btn { width: 100%; }
+}
+.wizard-script { display: grid; gap: 6px; padding-left: 22px; }
+.wizard-script li.is-sent { color: var(--ink-muted); text-decoration: line-through; }

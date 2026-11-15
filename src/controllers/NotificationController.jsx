@@ -11,7 +11,7 @@ function toNotification(event, state) {
   const p = event.payload ?? {};
   switch (event.type) {
     case "ai/adjust":
-      return { tone: "ai", title: "AI adjusted the weld", body: p.message, link: "/historian" };
+      return { tone: "ai", title: "AI adjusted the weld", body: p.message }; // event log page is parked
     case "bin/set":
       return p.inEnvelope ? null : { tone: "warning", title: "Parts bin out of reach", body: "Open the cell and push the bin back onto the marked spot.", sticky: true };
     case "cycle/jobScanned":

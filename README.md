@@ -12,7 +12,7 @@ npm run dev          # http://localhost:5173
 npm run build        # production build in dist/
 ```
 
-Demo accounts: `jack / weld123`, `operator2 / weld456` (client-side only — **not secure**).
+Demo accounts: `operator1 / weld123` (GMAW cell), `operator2 / weld456` (WAAM cell) — client-side only, **not secure**. (Until task T1b is done, the GMAW account is still `jack / weld123`.)
 
 ## Wizard-of-Oz session
 

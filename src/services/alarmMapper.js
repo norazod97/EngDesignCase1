@@ -63,5 +63,7 @@ export function toAppAlarm(json) {
     // Step-by-step fix. Never shown in the alarm window: the wizard sends it
     // through the help channel when the participant asks for help (PLAN section 2).
     resolutionScript: json.resolution_script ?? [],
+    // When the alarm should fire (wizard schedule): process step, seconds into it, WAAM layer.
+    trigger: json.trigger ?? null,
   };
 }

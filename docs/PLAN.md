@@ -32,7 +32,7 @@ Each participant does 8 assemblies (4 GMAW, 4 WAAM): no anomaly, welding-process
 - D2: the alarm flow in section 2.
 - D3: one codebase, folder `src/conditions/` with `chatbot/` and `colleagues/`, two builds.
 - D4: participant and wizard on one laptop with two screens (BroadcastChannel is enough).
-- D5: trial order. Fixed, or Latin square after the baseline (`src/data/study/study-design.json`). *Still to decide.*
+- D5: **DECIDED (15 Nov 2026): fixed trial order** within each cell: assembly 1 no anomaly, 2 welding process, 3 robot programming, 4 ML defect detection (`trial_order_within_block.mode = "fixed"` in `src/data/study/study-design.json`). Cell order (GMAW first or WAAM first) alternates by participant number; the alarm variant rotates by participant number.
 - Cycle states: only **idle / running / halted**, with a short reason.
 - GMAW has 7 steps: Pick & align → Find the seam → Dry run → Ready to weld (operator) → Weld → AI inspection → Visual NDT (operator). Step ids match `trigger.step` in the alarm files.
 
@@ -75,12 +75,13 @@ Also done (UI polish): T3 (colleagues via a controller hook), colleague photos w
 **Done on 15 Nov 2026 (evening):** T10 study log + export (`services/studyLog.js`, `controllers/StudyLogController.jsx`; wizard card "Study session · log" with participant code, Export CSV / JSON, Clear log; column `falseAlarmCorrect` scores each alarm flow).
 **Done on 15 Nov 2026 (night):** T4 + T12 two study versions. `src/conditions/` (chatbot, colleagues), `useCondition` / `useFeature`, `HelpController` (one logged help channel: help_opened, help_colleague_chosen, help_closed with "considered_only"), shared `HelpChat` / `ColleaguePicker`, colleague help panel. Alarm button: chatbot "Ask AI"; colleagues "Call <name>" = first AVAILABLE colleague whose expertise matches the alarm, otherwise "Call a colleague" with a list (busy colleagues can still be chosen). Old HelpModal and Messages panel are parked.
 **Done:** T5 publish both versions. `npm run build` runs `scripts/build-all.mjs`: dist/chatbot, dist/colleagues and a start page dist/index.html. Each version has its own wizard channel, and every log event has a `version` column.
-**Not done yet:** T0 comments for older files, T2, T2b, T6b, T9b, T13–T15, T17. Voice input in the text steps is not built.
+**Done:** T13 trial schedule (`services/studyScheduler.js`; wizard card "Trial schedule": from the participant code it shows variant, cell order and the planned alarm per assembly, highlights it red "DUE NOW" at its trigger step, and logs fired alarms as planned or off-script).
+**Not done yet:** T0 comments for older files, T2, T2b, T6b, T9b, T14, T15, T17. Until T6b is done, the planned GMAW ML alarms and GMAW-WP-02 point to steps after the weld (or a step that no longer exists), so they never show "DUE NOW": fire them by hand with "Fire planned alarm". Voice input in the text steps is not built.
 
 **Order to finish the study app** (most important first):
 1. ~~T10 study log + export~~ (done).
 2. ~~T4 + T12 two versions~~ and ~~T5 publish both~~ (done).
-3. **T13** participant code + trial schedule (needs decision D5).
+3. ~~T13 participant code + trial schedule~~ (done).
 4. **T6b + T9b** alarms only during the process; quiet alerts in the assembly report.
 5. **T14 + T15** real WAAM steps and screens.
 6. **T17** persona check and a full pilot session per build.

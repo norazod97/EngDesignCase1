@@ -95,9 +95,9 @@
       "severity": "warning",
       "stop_behaviour": "none",
       "trigger": {
-        "stage": "review",
-        "step": "review",
-        "offset_s": 2
+        "stage": "run",
+        "step": "weld",
+        "offset_s": 12
       },
       "aas": {
         "shell_id": "urn:weldsense:aas:cell:gmaw-01",
@@ -120,7 +120,7 @@
           "limit": 15
         }
       ],
-      "operator_message": "The arc was unstable for 7 seconds in the middle of the seam. Check that part of the weld.",
+      "operator_message": "The arc is unstable now, 12-19 s into the weld. Check that part of the weld.",
       "technical_detail": "Voltage standard deviation rose from 1.2 V to 4.8 V between 12 s and 19 s with frequent short-circuit bursts and wire-feed fluctuations, a pattern typical of a worn or spatter-blocked contact tip. The weld in that zone may show spatter and lack of fusion.",
       "ai_decision": null,
       "ground_truth": {

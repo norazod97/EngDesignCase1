@@ -515,3 +515,10 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .flow-choice-call { border-color: var(--lamp-positive); }
 .flow-choice-call .icon { color: var(--text-positive); }
 .help-drawer .drawer-body { display: grid; gap: 14px; }
+
+/* ---- Wizard trial schedule (PLAN T13) ------------------------------------- */
+.wizard-schedule { display: grid; gap: 8px; padding-left: 0; list-style: none; }
+.wizard-schedule li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: var(--radius); }
+.wizard-schedule li.is-now { border-color: var(--accent); background: var(--accent-tint); }
+.wizard-schedule li.is-due { border-color: var(--lamp-error); background: var(--tint-error); }
+.wizard-schedule small { color: var(--ink-muted); }

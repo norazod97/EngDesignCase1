@@ -9,15 +9,15 @@
       "process": "GMAW",
       "cell_profile_id": "gmaw-fixtureless",
       "knowledge_domain": "ml_defect_detection",
-      "title": "AI flags undercut that is not there",
-      "operator_title": "AI inspection: possible undercut",
+      "title": "AI weld monitor flags undercut that is not there",
+      "operator_title": "AI weld monitor: possible undercut",
       "error_code": "E-GMAW-301",
       "severity": "warning",
-      "stop_behaviour": "none",
+      "stop_behaviour": "hold_current_step",
       "trigger": {
-        "stage": "inspect",
-        "step": "post_scan",
-        "offset_s": 4
+        "stage": "run",
+        "step": "weld",
+        "offset_s": 8
       },
       "aas": {
         "shell_id": "urn:weldsense:aas:cell:gmaw-01",
@@ -34,8 +34,8 @@
           "limit": 0.5
         }
       ],
-      "operator_message": "The AI thinks there is undercut on the left edge. It is only medium sure.",
-      "technical_detail": "Image classifier: undercut, confidence 0.58. Heatmap focuses on a bright reflection on the bead. The laser profile at the same spot shows no undercut (0.05 mm, limit 0.5 mm).",
+      "operator_message": "The AI sees possible undercut on the left edge. It is only medium sure.",
+      "technical_detail": "In-process seam-camera classifier during welding: undercut, confidence 0.58, at 40-55 mm. The heatmap focuses on a bright arc reflection on the bead. The laser profile at the same spot shows no undercut (0.05 mm, limit 0.5 mm).",
       "ai_decision": {
         "ai_function_key": "bead_defects",
         "what": "Possible undercut on the left edge, 40-55 mm from the start",
@@ -46,25 +46,25 @@
         "is_correct": false
       },
       "ground_truth": {
-        "root_cause": "Glare from a shiny spot fooled the image model (false alarm).",
-        "consequence_if_ignored": "Good part sent to rework or scrap for no reason."
+        "root_cause": "Arc glare on a shiny spot fooled the camera model (false alarm).",
+        "consequence_if_ignored": "Weld stopped and part reworked for no reason."
       },
       "expected_response": {
         "correct_actions": [
           "compare_heatmap_with_profile",
           "inspect_bead_visually",
           "flag_ai_wrong",
-          "accept_part"
+          "resume_weld"
         ],
         "acceptable_actions": [
           "ask_for_help",
-          "send_to_manual_inspection"
+          "mark_weld_for_inspection"
         ],
         "wrong_actions": [
           "scrap_part",
           "rework_without_checking"
         ],
-        "resolved_when": "Operator overrules the AI with a reason, or the part goes to manual inspection."
+        "resolved_when": "Operator overrules the AI with a reason and the weld continues."
       },
       "help_content": {
         "hints": [
@@ -84,12 +84,11 @@
       },
       "literature": "Image-based defect CNNs and Grad-CAM explanations: Zhang et al. 2026; Satsangi et al. 2026. Trust calibration: van der Waa et al. 2021.",
       "resolution_script": [
-        "Do not scrap the part yet.",
+        "Do not scrap the part.",
         "Open the heatmap: the red spot is on a bright reflection.",
         "Open the bead profile at the same place: depth 0.05 mm, limit 0.5 mm.",
         "Look at the bead yourself. No undercut means the AI was wrong.",
-        "Press 'AI was wrong', choose 'reflection', and accept the part.",
-        "Press 'Problem solved' and write what you saw."
+        "Press 'Problem solved' and write what you saw, e.g. 'reflection'."
       ],
       "false_alarm_is_correct": true
     },
@@ -99,15 +98,15 @@
       "process": "GMAW",
       "cell_profile_id": "gmaw-fixtureless",
       "knowledge_domain": "ml_defect_detection",
-      "title": "AI is unsure: unfamiliar material",
-      "operator_title": "AI inspection: low confidence",
+      "title": "AI weld monitor is unsure: unfamiliar material",
+      "operator_title": "AI weld monitor: low confidence",
       "error_code": "E-GMAW-302",
       "severity": "warning",
-      "stop_behaviour": "none",
+      "stop_behaviour": "hold_current_step",
       "trigger": {
-        "stage": "inspect",
-        "step": "post_scan",
-        "offset_s": 4
+        "stage": "run",
+        "step": "weld",
+        "offset_s": 6
       },
       "aas": {
         "shell_id": "urn:weldsense:aas:cell:gmaw-01",
@@ -130,8 +129,8 @@
           "limit": null
         }
       ],
-      "operator_message": "The AI says the bead is OK, but it has never seen this material before.",
-      "technical_detail": "Bead classifier output OK with confidence 0.61 and an out-of-distribution warning: the input features fall outside the training range (zinc-coated surface, different bead appearance). Galvanised steel is prone to porosity from zinc vapour.",
+      "operator_message": "The AI says the weld looks OK. But it has never seen this material.",
+      "technical_detail": "In-process bead classifier (seam camera + arc signals): OK, confidence 0.61, with an out-of-distribution warning. The zinc-coated surface and spatter pattern are outside the training range. Galvanised steel is prone to porosity from zinc vapour.",
       "ai_decision": {
         "ai_function_key": "bead_defects",
         "what": "Bead OK",
@@ -142,13 +141,13 @@
         "is_correct": false
       },
       "ground_truth": {
-        "root_cause": "Model trained only on plain steel; the bead has fine surface pores it cannot recognise.",
+        "root_cause": "Model trained only on plain steel; zinc vapour is causing fine pores it cannot recognise.",
         "consequence_if_ignored": "Porous weld accepted without inspection."
       },
       "expected_response": {
         "correct_actions": [
           "do_not_rely_on_ai",
-          "send_to_manual_inspection",
+          "mark_weld_for_inspection",
           "flag_ai_unsure"
         ],
         "acceptable_actions": [
@@ -156,9 +155,9 @@
           "inspect_bead_visually"
         ],
         "wrong_actions": [
-          "accept_part_as_ok"
+          "accept_weld_as_ok"
         ],
-        "resolved_when": "Part sent to manual inspection."
+        "resolved_when": "Weld marked for manual inspection."
       },
       "help_content": {
         "hints": [
@@ -179,8 +178,8 @@
       "resolution_script": [
         "Do not trust this 'OK': the AI has not seen this material.",
         "Read the warning: galvanised steel was not in its examples.",
-        "Mark the weld 'Check needed' and send it to manual inspection.",
-        "Press 'AI unsure' so the team knows.",
+        "Let the weld finish, then mark it 'Check needed'.",
+        "Send it to manual inspection and say the AI was unsure.",
         "Press 'Problem solved' and write 'sent to inspection'."
       ],
       "false_alarm_is_correct": false
@@ -191,15 +190,15 @@
       "process": "GMAW",
       "cell_profile_id": "gmaw-fixtureless",
       "knowledge_domain": "ml_defect_detection",
-      "title": "AI missed internal pores (found by NDT)",
-      "operator_title": "AI result and NDT do not match",
+      "title": "AI camera misses pores that the arc signals show",
+      "operator_title": "AI result and arc signals do not match",
       "error_code": "E-GMAW-303",
       "severity": "error",
-      "stop_behaviour": "none",
+      "stop_behaviour": "hold_current_step",
       "trigger": {
-        "stage": "inspect",
-        "step": "ndt",
-        "offset_s": 2
+        "stage": "run",
+        "step": "weld",
+        "offset_s": 10
       },
       "aas": {
         "shell_id": "urn:weldsense:aas:cell:gmaw-01",
@@ -207,23 +206,23 @@
         "element_path": "QualityEvents/CrossCheck/Mismatch",
         "semantic_id": "urn:weldsense:semantic:quality:cross-check-mismatch:1-0"
       },
-      "source_asset": "profilometer",
+      "source_asset": "psu",
       "signals": [
         {
-          "name": "AI bead check",
+          "name": "AI bead check (camera)",
           "value": "OK (high confidence)",
           "unit": "",
           "limit": null
         },
         {
-          "name": "NDT result (RT)",
-          "value": "porosity cluster at 120 mm",
-          "unit": "",
-          "limit": null
+          "name": "Short arc-voltage drops (pore signs)",
+          "value": 23,
+          "unit": "per s",
+          "limit": 5
         }
       ],
-      "operator_message": "The AI said OK, but the X-ray found pores inside the weld. The AI was wrong.",
-      "technical_detail": "Cross-check mismatch: bead classifier OK (0.91) from surface images and profile; radiographic test shows a porosity cluster below the surface. Surface sensors cannot see internal pores.",
+      "operator_message": "The AI camera says OK. But the arc signals show gas pores forming.",
+      "technical_detail": "Cross-check mismatch during welding: the camera-based bead classifier says OK (0.91) from the surface. The arc-voltage signal shows repeated short drops, typical of gas pores forming below the surface. Surface images cannot see internal pores.",
       "ai_decision": {
         "ai_function_key": "bead_defects",
         "what": "Bead OK",
@@ -234,48 +233,48 @@
         "is_correct": false
       },
       "ground_truth": {
-        "root_cause": "Internal porosity; the AI only sees the surface.",
-        "consequence_if_ignored": "Weak weld delivered; AI keeps being trusted for defects it cannot see."
+        "root_cause": "Internal porosity from a disturbed gas shield; the AI camera only sees the surface.",
+        "consequence_if_ignored": "Weak weld delivered; the AI keeps being trusted for defects it cannot see."
       },
       "expected_response": {
         "correct_actions": [
-          "quarantine_part",
+          "check_gas_and_nozzle",
           "flag_ai_wrong",
-          "notify_quality"
+          "mark_weld_for_inspection"
         ],
         "acceptable_actions": [
           "ask_for_help",
           "open_replay_to_look_for_signal_signs"
         ],
         "wrong_actions": [
-          "accept_part",
+          "accept_weld",
           "ignore_mismatch"
         ],
-        "resolved_when": "Part quarantined and the AI miss recorded."
+        "resolved_when": "Weld marked for X-ray inspection and the AI miss recorded."
       },
       "help_content": {
         "hints": [
-          "The X-ray result counts, not the AI. The AI cannot look inside the weld.",
-          "Keep this part apart from good parts.",
-          "Press 'AI was wrong', put the part in quarantine and tell quality."
+          "The arc signals count here, not the camera. The camera cannot see inside the weld.",
+          "Check the gas flow and the nozzle for spatter.",
+          "Mark the weld for X-ray inspection and record that the AI missed it."
         ],
         "who_knows": [
           "ml_defect_detection"
         ],
         "glossary": [
-          "NDT",
-          "X-ray",
           "porosity",
-          "cross-check"
+          "arc signal",
+          "cross-check",
+          "X-ray"
         ]
       },
       "literature": "Internal defects need radiographic/ultrasonic testing: Zhang et al. 2026; cross-check design: docs/04.",
       "resolution_script": [
-        "The X-ray result counts, not the AI. The AI only sees the surface.",
-        "Put the part in the red quarantine box.",
-        "Press 'AI was wrong' and choose 'internal pores'.",
-        "Press 'Notify quality'.",
-        "Press 'Problem solved' and write 'part quarantined'."
+        "Trust the arc signals here, not the AI camera.",
+        "The camera only sees the surface. Pores form inside.",
+        "Check the gas flow and clean the nozzle.",
+        "Mark this weld 'Check needed' for X-ray inspection.",
+        "Press 'Problem solved' and write 'pores, AI missed them'."
       ],
       "false_alarm_is_correct": false
     }

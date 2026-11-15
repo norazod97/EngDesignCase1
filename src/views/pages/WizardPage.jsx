@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { createWizardChannel } from "../../services/wizardChannel.js";
 import { AI_ADJUSTMENTS } from "../../mock/scenarios.js";
 // The wizard is the researcher's tool, so it reads the alarm database directly.
-import { isOutcomeCorrect, listAlarms } from "../../services/alarmRepository.js";
+import { getAlarm, isOutcomeCorrect, listAlarms } from "../../services/alarmRepository.js";
+import { participantNumber, scheduleFor } from "../../services/studyScheduler.js";
 import { appendEvent, clearLog, countEvents, downloadText, getParticipantCode, readAll, setParticipantCode, toCsv } from "../../services/studyLog.js";
 import { EquipmentStatus } from "../../models/equipment.js";
 import { formatTime } from "../../models/job.js";
@@ -42,7 +43,8 @@ export function WizardPage() {
 
   const cmd = (name, args) => {
     channel.current?.post({ type: "cmd", name, args });
-    if (name === "alarm") appendEvent("wizard", { type: "wizard_alarm_triggered", alarmId: args.id }); // study log
+    // Study log. planned = fired from the schedule; false = off-script (from the full list).
+    if (name === "alarm") appendEvent("wizard", { type: "wizard_alarm_triggered", alarmId: args.id, choice: args.planned ? "planned" : "off_script" });
   };
   const say = (text) => {
     if (!text.trim()) return;
@@ -67,6 +69,14 @@ export function WizardPage() {
     setCode(value);
     setParticipantCode(value);
   }
+  // ---- Trial schedule for this participant (PLAN T13, D5 = fixed order) ----
+  const pNum = participantNumber(code);
+  const schedule = pNum ? scheduleFor(pNum) : null;
+  const block = schedule?.blocks.find((b) => b.process === s?.process) ?? null; // the cell the participant is in now
+  // Which assembly is in the cell now (job ids end in A1..A4), and which step.
+  const nowAssembly = Number(s?.cycle.currentJobId?.match(/A(\d)$/)?.[1]) || null;
+  const nowStep = s?.cycle.currentJobId ? s?.steps?.[s.cycle.stepIndex]?.id : null;
+
   // All events, with the scoring column filled in for finished alarm flows.
   function exportRows() {
     return readAll().map((e) => (e.type === "alarm_flow_done" ? { ...e, falseAlarmCorrect: isOutcomeCorrect(e.alarmId, e.outcome) } : e));
@@ -118,7 +128,44 @@ export function WizardPage() {
           </div>
         </Card>
 
-        <Card title={`Alarms · ${s?.process ?? "sign in first"}`}>
+        <Card title="Trial schedule">
+          {!schedule ? <p className="muted">Type a participant code with a number (e.g. P07) to see the schedule.</p> : (
+            <div className="stack">
+              <p>
+                <strong>P{schedule.n}</strong> · alarm variant {schedule.variant} · cell order:{" "}
+                {schedule.blocks.map((b) => `${b.order}. ${b.process}`).join("  →  ")}
+              </p>
+              {!block ? <p className="muted">The participant tab is not signed in to a cell yet.</p> : (
+                <ol className="wizard-schedule">
+                  {block.trials.map((t) => {
+                    const alarm = t.alarmId ? getAlarm(t.alarmId) : null;
+                    const isNow = nowAssembly === t.assembly;
+                    const due = isNow && alarm && nowStep === alarm.trigger?.step;
+                    return (
+                      <li key={t.assembly} className={`${isNow ? "is-now" : ""} ${due ? "is-due" : ""}`}>
+                        <strong>Assembly {t.assembly}</strong> · {t.label}
+                        {alarm ? (
+                          <>
+                            <span> · {alarm.id} · {alarm.title}</span>
+                            <small> · fire at step "{alarm.trigger?.step}"{alarm.trigger?.layer ? `, layer ${alarm.trigger.layer}` : ""}{alarm.trigger?.offset_s ? `, +${alarm.trigger.offset_s} s` : ""}</small>
+                            {isNow && (
+                              <Button variant={due ? "danger" : "ink"} size="sm" onClick={() => cmd("alarm", { id: alarm.id, planned: true })}>
+                                {due ? "DUE NOW · fire" : "Fire planned alarm"}
+                              </Button>
+                            )}
+                          </>
+                        ) : <span className="muted"> · no alarm, just watch</span>}
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+              <p className="muted">Now: {nowAssembly ? `assembly ${nowAssembly}, step "${nowStep}"` : "no assembly running"}. Alarms from the full list below are logged as off-script.</p>
+            </div>
+          )}
+        </Card>
+
+        <Card title={`Alarms · ${s?.process ?? "sign in first"} (off-script)`}>
           <div className="stack">
             {alarms.map((a) => (
               <Button key={a.id} variant={a.halts ? "danger" : "ink"} onClick={() => cmd("alarm", { id: a.id })}>

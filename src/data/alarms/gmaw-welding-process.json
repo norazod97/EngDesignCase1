@@ -1,0 +1,255 @@
+{
+  "file_version": "1.0",
+  "process": "GMAW",
+  "knowledge_domain": "welding_process",
+  "alarms": [
+    {
+      "id": "GMAW-WP-01",
+      "variant": 1,
+      "process": "GMAW",
+      "cell_profile_id": "gmaw-fixtureless",
+      "knowledge_domain": "welding_process",
+      "title": "Shielding gas flow too low",
+      "error_code": "E-GMAW-101",
+      "severity": "error",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "preview",
+        "step": "ready",
+        "offset_s": 3
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:gmaw-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/GasFlowLow",
+        "semantic_id": "urn:weldsense:semantic:alarm:gas-flow-low:1-0"
+      },
+      "source_asset": "psu",
+      "signals": [
+        {
+          "name": "Gas flow (pre-purge)",
+          "value": 6,
+          "unit": "L/min",
+          "limit": 12
+        }
+      ],
+      "operator_message": "Gas flow is too low. The weld would get pores. The cell will not start welding.",
+      "technical_detail": "Pre-purge flow measured 6 L/min against a minimum of 12 L/min (setpoint 15 L/min). Possible causes: cylinder nearly empty, valve partly closed, kinked hose, or spatter blocking the nozzle.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Gas cylinder almost empty (simulated).",
+        "consequence_if_ignored": "Porosity in the weld; part fails inspection."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "check_gas_supply",
+          "check_nozzle",
+          "repeat_gas_check"
+        ],
+        "acceptable_actions": [
+          "ask_for_help"
+        ],
+        "wrong_actions": [
+          "start_weld_anyway",
+          "change_current_or_voltage",
+          "dismiss_alarm"
+        ],
+        "resolved_when": "Gas check passes after the cylinder or hose problem is fixed."
+      },
+      "help_content": {
+        "hints": [
+          "Low gas means the weld is not protected from air. Do not weld yet.",
+          "Look at the gas cylinder pressure, the valve, the hose and the nozzle.",
+          "Open the valve fully or change the cylinder, clean the nozzle, then press 'Check gas again'."
+        ],
+        "who_knows": [
+          "welding_process"
+        ],
+        "glossary": [
+          "shielding gas",
+          "porosity",
+          "nozzle"
+        ]
+      },
+      "literature": "Porosity from insufficient shielding: weld defects document; Zhang et al. 2026 (signal precursors of porosity).",
+      "resolution_script": [
+        "Do not start welding.",
+        "Check the gas cylinder gauge. If it is near zero, change the cylinder.",
+        "Open the cylinder valve fully and check the hose for kinks.",
+        "Look into the nozzle. Remove spatter with the nozzle cleaner.",
+        "Press 'Check gas again'. Flow must be 12 L/min or more.",
+        "When the check is green, press 'Problem solved'."
+      ],
+      "false_alarm_is_correct": false
+    },
+    {
+      "id": "GMAW-WP-02",
+      "variant": 2,
+      "process": "GMAW",
+      "cell_profile_id": "gmaw-fixtureless",
+      "knowledge_domain": "welding_process",
+      "title": "Unstable arc: worn contact tip",
+      "error_code": "E-GMAW-102",
+      "severity": "warning",
+      "stop_behaviour": "none",
+      "trigger": {
+        "stage": "review",
+        "step": "review",
+        "offset_s": 2
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:gmaw-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/ArcInstability",
+        "semantic_id": "urn:weldsense:semantic:alarm:arc-instability:1-0"
+      },
+      "source_asset": "psu",
+      "signals": [
+        {
+          "name": "Voltage variation (12-19 s)",
+          "value": 4.8,
+          "unit": "V",
+          "limit": 2.0
+        },
+        {
+          "name": "Short-circuit bursts",
+          "value": 37,
+          "unit": "per s",
+          "limit": 15
+        }
+      ],
+      "operator_message": "The arc was unstable for 7 seconds in the middle of the seam. Check that part of the weld.",
+      "technical_detail": "Voltage standard deviation rose from 1.2 V to 4.8 V between 12 s and 19 s with frequent short-circuit bursts and wire-feed fluctuations, a pattern typical of a worn or spatter-blocked contact tip. The weld in that zone may show spatter and lack of fusion.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Contact tip worn after many welds (simulated).",
+        "consequence_if_ignored": "Next parts get the same spatter and fusion problems."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "open_replay_at_marked_time",
+          "mark_weld_for_inspection",
+          "replace_contact_tip_before_next_part"
+        ],
+        "acceptable_actions": [
+          "ask_for_help"
+        ],
+        "wrong_actions": [
+          "ignore_and_continue",
+          "change_parameters_of_next_weld_without_fixing_tip"
+        ],
+        "resolved_when": "Weld marked for inspection and contact tip change recorded."
+      },
+      "help_content": {
+        "hints": [
+          "A jumpy arc usually comes from the torch, not from the settings.",
+          "Look at the contact tip: is the hole worn oval or full of spatter?",
+          "Mark this weld for inspection and change the contact tip before the next part."
+        ],
+        "who_knows": [
+          "welding_process"
+        ],
+        "glossary": [
+          "contact tip",
+          "spatter",
+          "arc stability"
+        ]
+      },
+      "literature": "Electrical signals as arc-stability indicators: Geng et al. 2025; Zhang et al. 2026.",
+      "resolution_script": [
+        "Open the replay at 12-19 s and look at the voltage line.",
+        "Mark this weld 'Check needed' for inspection.",
+        "Unlock the cell and stop the torch at the service position.",
+        "Remove the nozzle and the contact tip. A worn tip has an oval hole.",
+        "Fit a new contact tip, put the nozzle back, lock the cell.",
+        "Press 'Problem solved' and write 'tip changed'."
+      ],
+      "false_alarm_is_correct": false
+    },
+    {
+      "id": "GMAW-WP-03",
+      "variant": 3,
+      "process": "GMAW",
+      "cell_profile_id": "gmaw-fixtureless",
+      "knowledge_domain": "welding_process",
+      "title": "Gap too wide: burn-through risk",
+      "error_code": "E-GMAW-103",
+      "severity": "error",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "preview",
+        "step": "seam_scan",
+        "offset_s": 4
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:gmaw-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/GapOutOfTolerance",
+        "semantic_id": "urn:weldsense:semantic:alarm:gap-out-of-tolerance:1-0"
+      },
+      "source_asset": "profilometer",
+      "signals": [
+        {
+          "name": "Root gap (max along seam)",
+          "value": 2.4,
+          "unit": "mm",
+          "limit": 1.5
+        },
+        {
+          "name": "Plate thickness",
+          "value": 3,
+          "unit": "mm",
+          "limit": null
+        }
+      ],
+      "operator_message": "The gap between the parts is too wide at the end of the seam. The weld could burn through.",
+      "technical_detail": "Seam scan shows the root gap growing from 0.8 mm to 2.4 mm over the last 60 mm. The preset procedure allows up to 1.5 mm on 3 mm plate. Fixed parameters cannot compensate for this gap.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Part placed slightly rotated in holding robot B's gripper (simulated).",
+        "consequence_if_ignored": "Burn-through or lack of fusion at the seam end."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "do_not_weld",
+          "reposition_parts",
+          "rescan_seam"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "select_alternative_recipe_if_available"
+        ],
+        "wrong_actions": [
+          "start_weld_anyway",
+          "dismiss_alarm"
+        ],
+        "resolved_when": "New seam scan shows the gap within 1.5 mm."
+      },
+      "help_content": {
+        "hints": [
+          "A gap this wide on thin plate melts away instead of joining.",
+          "Check how the parts sit in the grippers at the end of the seam.",
+          "Let the robots put the parts down and pick them up again, then scan the seam again."
+        ],
+        "who_knows": [
+          "welding_process"
+        ],
+        "glossary": [
+          "root gap",
+          "burn-through",
+          "fit-up"
+        ]
+      },
+      "literature": "Part dimension variation and fit-up as main problems of robotic welding: Curiel et al. 2023.",
+      "resolution_script": [
+        "Do not weld: the gap is too wide for this plate.",
+        "Let robots A and B put the parts back in the stations.",
+        "Check that both parts sit flat and against the stops.",
+        "Let the robots pick the parts up again.",
+        "Run the seam scan again. The gap must be 1.5 mm or less.",
+        "If it is still too wide, set the part aside and press 'Problem solved' with a note."
+      ],
+      "false_alarm_is_correct": false
+    }
+  ]
+}

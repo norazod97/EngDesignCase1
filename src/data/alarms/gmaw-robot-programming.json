@@ -1,0 +1,253 @@
+{
+  "file_version": "1.0",
+  "process": "GMAW",
+  "knowledge_domain": "robot_programming",
+  "alarms": [
+    {
+      "id": "GMAW-RP-01",
+      "variant": 1,
+      "process": "GMAW",
+      "cell_profile_id": "gmaw-fixtureless",
+      "knowledge_domain": "robot_programming",
+      "title": "Dry run: path leaves the seam at the end",
+      "error_code": "E-GMAW-201",
+      "severity": "error",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "preview",
+        "step": "dry_run",
+        "offset_s": 12
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:gmaw-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/PathDeviation",
+        "semantic_id": "urn:weldsense:semantic:alarm:path-deviation:1-0"
+      },
+      "source_asset": "torch_cobot",
+      "signals": [
+        {
+          "name": "Path deviation at seam end",
+          "value": 2.6,
+          "unit": "mm",
+          "limit": 0.5
+        }
+      ],
+      "operator_message": "In the dry run the torch moved off the seam near the end. Do not weld yet.",
+      "technical_detail": "The seam-scan correction was applied to the start point only; the end waypoints kept their nominal positions, so the torch path drifts 2.6 mm from the measured seam over the last 80 mm.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Correction offset applied to the start waypoint only, not to the whole path (simulated program error).",
+        "consequence_if_ignored": "Weld misses the joint at the seam end (lack of fusion)."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "do_not_weld",
+          "apply_correction_to_whole_path",
+          "repeat_dry_run"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "rescan_seam"
+        ],
+        "wrong_actions": [
+          "start_weld_anyway",
+          "dismiss_alarm"
+        ],
+        "resolved_when": "Dry run deviation stays under 0.5 mm along the whole seam."
+      },
+      "help_content": {
+        "hints": [
+          "The path was fixed at the start but not at the end.",
+          "Compare the blue measured seam with the orange torch path in the 3D view.",
+          "Choose 'Apply correction to whole seam', then run the dry run again."
+        ],
+        "who_knows": [
+          "robot_programming"
+        ],
+        "glossary": [
+          "dry run",
+          "waypoint",
+          "path correction"
+        ]
+      },
+      "literature": "Seam finding and path correction before welding: Curiel et al. 2023; Li et al. 2026.",
+      "resolution_script": [
+        "Do not weld yet.",
+        "Open the 3D view and compare the blue seam with the orange path.",
+        "Press 'Path correction' and choose 'Whole seam'.",
+        "Run the dry run again.",
+        "The path must stay within 0.5 mm along the whole seam.",
+        "When the dry run is green, press 'Problem solved'."
+      ],
+      "false_alarm_is_correct": false
+    },
+    {
+      "id": "GMAW-RP-02",
+      "variant": 2,
+      "process": "GMAW",
+      "cell_profile_id": "gmaw-fixtureless",
+      "knowledge_domain": "robot_programming",
+      "title": "Dry run: torch too close to holding robot B",
+      "error_code": "E-GMAW-202",
+      "severity": "error",
+      "stop_behaviour": "hold_current_step",
+      "trigger": {
+        "stage": "preview",
+        "step": "dry_run",
+        "offset_s": 8
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:gmaw-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/ClearanceViolation",
+        "semantic_id": "urn:weldsense:semantic:alarm:clearance-violation:1-0"
+      },
+      "source_asset": "torch_cobot",
+      "signals": [
+        {
+          "name": "Distance torch - gripper B at waypoint 7",
+          "value": 8,
+          "unit": "mm",
+          "limit": 20
+        }
+      ],
+      "operator_message": "The torch came very close to robot B's gripper. The dry run stopped.",
+      "technical_detail": "At waypoint 7 the torch nozzle passes 8 mm from holding robot B's gripper; the minimum clearance is 20 mm. The approach angle at the corner is too flat for the current gripper pose.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Approach waypoint 7 programmed with too flat a torch angle for this part variant (simulated).",
+        "consequence_if_ignored": "Collision between torch and gripper; damaged torch, lost part."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "keep_stopped",
+          "adjust_waypoint_or_torch_angle",
+          "repeat_dry_run"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "change_gripper_pose_of_robot_b"
+        ],
+        "wrong_actions": [
+          "resume_dry_run_without_change",
+          "start_weld_anyway"
+        ],
+        "resolved_when": "Dry run completes with all clearances at least 20 mm."
+      },
+      "help_content": {
+        "hints": [
+          "The robots would hit each other at one corner. Keep them stopped.",
+          "Open waypoint 7 in the 3D view and look at the torch angle at the corner.",
+          "Tilt the torch more at waypoint 7 (or let robot B hold the part higher), then repeat the dry run."
+        ],
+        "who_knows": [
+          "robot_programming"
+        ],
+        "glossary": [
+          "waypoint",
+          "clearance",
+          "torch angle"
+        ]
+      },
+      "literature": "Workspace and multi-robot coordination issues in robotic welding cells: Li et al. 2026; Marvel et al. 2020 (robot-world representation).",
+      "resolution_script": [
+        "Keep the robots stopped.",
+        "Open waypoint 7 in the 3D view.",
+        "Raise the torch angle at waypoint 7 by 10 degrees.",
+        "Or: set robot B's holding pose to 'High' for this part.",
+        "Run the dry run again. All distances must be 20 mm or more.",
+        "When the dry run is green, press 'Problem solved'."
+      ],
+      "false_alarm_is_correct": false
+    },
+    {
+      "id": "GMAW-RP-03",
+      "variant": 3,
+      "process": "GMAW",
+      "cell_profile_id": "gmaw-fixtureless",
+      "knowledge_domain": "robot_programming",
+      "title": "Wrong program for this part",
+      "error_code": "E-GMAW-203",
+      "severity": "error",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "preview",
+        "step": "dry_run",
+        "offset_s": 5
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:gmaw-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/ProgramPartMismatch",
+        "semantic_id": "urn:weldsense:semantic:alarm:program-part-mismatch:1-0"
+      },
+      "source_asset": "torch_cobot",
+      "signals": [
+        {
+          "name": "Part ID scanned",
+          "value": "BRACKET-B",
+          "unit": "",
+          "limit": null
+        },
+        {
+          "name": "Program loaded",
+          "value": "BRACKET-A",
+          "unit": "",
+          "limit": null
+        },
+        {
+          "name": "Path length difference",
+          "value": 40,
+          "unit": "mm",
+          "limit": 2
+        }
+      ],
+      "operator_message": "The robot program is for a different part. The path ends 40 mm too early.",
+      "technical_detail": "Loaded program BRACKET-A (seam 180 mm) does not match the scanned part BRACKET-B (seam 220 mm). The dry-run path stops 40 mm before the seam end.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Job created with the program of a similar part variant (simulated).",
+        "consequence_if_ignored": "Seam only partly welded."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "do_not_weld",
+          "load_program_for_bracket_b",
+          "repeat_dry_run"
+        ],
+        "acceptable_actions": [
+          "ask_for_help"
+        ],
+        "wrong_actions": [
+          "start_weld_anyway",
+          "dismiss_alarm"
+        ],
+        "resolved_when": "Program BRACKET-B loaded and dry run passes."
+      },
+      "help_content": {
+        "hints": [
+          "The robot thinks this is a different part.",
+          "Compare the part name on the label with the program name on the screen.",
+          "Open 'Change program', choose BRACKET-B, then run the dry run again."
+        ],
+        "who_knows": [
+          "robot_programming"
+        ],
+        "glossary": [
+          "robot program",
+          "part variant"
+        ]
+      },
+      "literature": "Program reuse and editing as cobot interface needs: Frijns & Schmidbauer 2021 (guidelines 12, 18).",
+      "resolution_script": [
+        "Do not weld: the program is for another part.",
+        "Read the part label: it says BRACKET-B.",
+        "Press 'Change program' and choose BRACKET-B.",
+        "Run the dry run again and check the path ends at the seam end.",
+        "When the dry run is green, press 'Problem solved'."
+      ],
+      "false_alarm_is_correct": false
+    }
+  ]
+}

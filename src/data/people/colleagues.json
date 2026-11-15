@@ -1,0 +1,60 @@
+{
+  "file_version": "1.0",
+  "description": "Fictional colleagues on shift, used only in condition B (app-colleagues). The wizard plays them. Each covers one knowledge domain of the alarms, so whether participants pick the matching expert can be analysed. Keep this roster identical for all participants.",
+  "colleagues": [
+    {
+      "id": "col-henk",
+      "first_name": "Henk",
+      "initials": "HV",
+      "role": "senior_welder",
+      "role_label": "Senior welder",
+      "languages": ["nl", "de", "en"],
+      "expertise": ["welding_process"],
+      "skills": ["GMAW", "WAAM", "visual inspection"],
+      "location": "GMAW cell",
+      "default_status": "available"
+    },
+    {
+      "id": "col-marta",
+      "first_name": "Marta",
+      "initials": "MK",
+      "role": "robot_programmer",
+      "role_label": "Robot programmer",
+      "languages": ["pl", "en"],
+      "expertise": ["robot_programming"],
+      "skills": ["robot programs", "dry runs", "paths"],
+      "location": "WAAM cell",
+      "default_status": "available"
+    },
+    {
+      "id": "col-yusuf",
+      "first_name": "Yusuf",
+      "initials": "YA",
+      "role": "quality_engineer",
+      "role_label": "Quality and AI engineer",
+      "languages": ["tr", "nl", "en"],
+      "expertise": ["ml_defect_detection"],
+      "skills": ["AI checks", "NDT", "scans"],
+      "location": "office",
+      "default_status": "available"
+    },
+    {
+      "id": "col-sanne",
+      "first_name": "Sanne",
+      "initials": "SB",
+      "role": "team_lead",
+      "role_label": "Team lead",
+      "languages": ["nl", "en"],
+      "expertise": ["team_lead"],
+      "skills": ["planning", "safety"],
+      "location": "shop floor",
+      "default_status": "busy"
+    }
+  ],
+  "reply_templates": {
+    "accept": "On my way. {hint}",
+    "decline_busy": "Busy right now, try {suggested_colleague}.",
+    "not_my_field": "Not my area, sorry. {suggested_colleague} knows this better.",
+    "follow_up": "{hint}"
+  }
+}

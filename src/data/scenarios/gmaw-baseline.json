@@ -1,0 +1,26 @@
+{
+  "scenario_id": "gmaw-baseline",
+  "version": "1.0",
+  "process": "GMAW",
+  "cell_profile_id": "gmaw-fixtureless",
+  "description": "One normal GMAW assembly with no anomaly. Alarm trials reuse this timeline and inject one alarm at the alarm's trigger point.",
+  "part": { "part_id": "BRACKET-B", "material": "S235 steel, 3 mm", "program": "BRACKET-B" },
+  "aas_shell_id": "urn:weldsense:aas:cell:gmaw-01",
+  "timeline": [
+    { "t_s": 0,   "stage": "prepare", "step": "load",      "event": "step_started",   "message": "Place both parts in the pick-up stations." },
+    { "t_s": 20,  "stage": "prepare", "step": "load",      "event": "robot_state",    "robot": "holder_a", "state": "holding", "message": "Robot A has part 1." },
+    { "t_s": 24,  "stage": "prepare", "step": "load",      "event": "robot_state",    "robot": "holder_b", "state": "holding", "message": "Robot B has part 2." },
+    { "t_s": 30,  "stage": "preview", "step": "seam_scan", "event": "step_started",   "message": "Scanning the seam." },
+    { "t_s": 42,  "stage": "preview", "step": "seam_scan", "event": "ai_decision",    "ai_function_key": "path_correction", "what": "Shifted the weld path 0.6 mm left", "confidence": "high", "confidence_value": 0.94, "explanation_type": "overlay", "is_correct": true },
+    { "t_s": 50,  "stage": "preview", "step": "dry_run",   "event": "step_started",   "message": "Dry run: the torch follows the path without welding." },
+    { "t_s": 75,  "stage": "preview", "step": "dry_run",   "event": "ai_decision",    "ai_function_key": "path_check", "what": "Path stays on the seam (max 0.2 mm) and clear of both robots", "confidence": "high", "confidence_value": 0.97, "explanation_type": "overlay", "is_correct": true },
+    { "t_s": 80,  "stage": "preview", "step": "ready",     "event": "awaiting_operator", "message": "Check the path and press 'Weld'." },
+    { "t_s": 95,  "stage": "run",     "step": "weld",      "event": "step_started",   "message": "Welding. Nothing can be changed during this weld." },
+    { "t_s": 95,  "stage": "run",     "step": "weld",      "event": "signal_stream",  "stream": "weld_signals", "profile": "stable", "duration_s": 28, "current_A": 220, "voltage_V": 24 },
+    { "t_s": 123, "stage": "run",     "step": "weld",      "event": "step_finished",  "message": "Weld finished." },
+    { "t_s": 130, "stage": "inspect", "step": "post_scan", "event": "step_started",   "message": "Scanning the bead." },
+    { "t_s": 142, "stage": "inspect", "step": "post_scan", "event": "ai_decision",    "ai_function_key": "bead_defects", "what": "Bead OK: width 6.1 mm, height 1.9 mm, no defects found", "confidence": "high", "confidence_value": 0.93, "explanation_type": "heatmap", "is_correct": true },
+    { "t_s": 150, "stage": "inspect", "step": "ndt",       "event": "awaiting_operator", "message": "Do a visual check and record the result." },
+    { "t_s": 170, "stage": "review",  "step": "review",    "event": "summary",        "message": "Weld done, within tolerance." }
+  ]
+}

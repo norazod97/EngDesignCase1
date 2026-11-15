@@ -1,0 +1,59 @@
+{
+  "study_id": "weldsense-woz-help-v2",
+  "version": "1.0",
+  "design": {
+    "between_subjects": {
+      "factor": "help_condition",
+      "levels": ["A_chatbot", "B_colleagues"],
+      "assignment": "alternate_by_participant_number_within_persona"
+    },
+    "within_subjects": {
+      "process": ["GMAW", "WAAM"],
+      "trial_type": ["none", "welding_process", "robot_programming", "ml_defect_detection"]
+    },
+    "assemblies_per_participant": 8,
+    "assemblies_per_process": 4
+  },
+  "trial_types": {
+    "none": { "label": "No anomaly (baseline)", "alarm_file": null },
+    "welding_process": { "label": "Anomaly needing welding-process knowledge", "alarm_file_pattern": "{process}-welding-process.json" },
+    "robot_programming": { "label": "Anomaly needing robot-programming knowledge", "alarm_file_pattern": "{process}-robot-programming.json" },
+    "ml_defect_detection": { "label": "Anomaly needing knowledge of ML defect detection", "alarm_file_pattern": "{process}-ml-defect-detection.json" }
+  },
+  "ordering": {
+    "process_block_order": {
+      "mode": "counterbalanced",
+      "sequences": [["GMAW", "WAAM"], ["WAAM", "GMAW"]]
+    },
+    "trial_order_within_block": {
+      "mode": "fixed",
+      "allowed_modes": ["fixed", "latin_square_after_baseline"],
+      "fixed": ["none", "welding_process", "robot_programming", "ml_defect_detection"],
+      "latin_square_after_baseline": [
+        ["none", "welding_process", "robot_programming", "ml_defect_detection"],
+        ["none", "robot_programming", "ml_defect_detection", "welding_process"],
+        ["none", "ml_defect_detection", "welding_process", "robot_programming"]
+      ],
+      "note": "Fixed order is the researcher's plan. With a fixed order, anomaly type is confounded with practice and fatigue; the Latin-square option keeps trial 1 as baseline and rotates trials 2-4."
+    },
+    "alarm_variant": {
+      "mode": "rotate_by_participant_number",
+      "variants": [1, 2, 3],
+      "note": "Participant n gets variant ((n - 1) mod 3) + 1 for every anomaly type, so each variant is used equally often and effects are not tied to one specific fault."
+    }
+  },
+  "questionnaires": {
+    "after_each_process_block": ["HUROX", "METUX"],
+    "optional_after_each_block": ["NASA-TLX"],
+    "items_source": "supplied by researcher (do not invent items)"
+  },
+  "measures_logged": [
+    "help_requests (count, time to first request, channel, target colleague or chat turns)",
+    "alarm onset -> first noticed -> response -> resolved timestamps",
+    "correct / acceptable / wrong actions per alarm (from expected_response)",
+    "AI decision overrides and 'AI was wrong' flags",
+    "task time per assembly",
+    "wizard observation tags",
+    "think-aloud audio (recorded outside the app)"
+  ]
+}

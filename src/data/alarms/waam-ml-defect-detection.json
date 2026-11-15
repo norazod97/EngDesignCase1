@@ -1,0 +1,299 @@
+{
+  "file_version": "1.0",
+  "process": "WAAM",
+  "knowledge_domain": "ml_defect_detection",
+  "alarms": [
+    {
+      "id": "WAAM-ML-01",
+      "variant": 1,
+      "process": "WAAM",
+      "cell_profile_id": "waam-repair",
+      "knowledge_domain": "ml_defect_detection",
+      "title": "AI missed a small repair area",
+      "error_code": "E-WAAM-301",
+      "severity": "warning",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "prepare",
+        "step": "confirm_regions",
+        "offset_s": 3
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:waam-01",
+        "submodel_id_short": "QualityEvents",
+        "element_path": "QualityEvents/RegionDetection/Result",
+        "semantic_id": "urn:weldsense:semantic:quality:region-detection:1-0"
+      },
+      "source_asset": "scanner",
+      "signals": [
+        {
+          "name": "Regions found by AI",
+          "value": 2,
+          "unit": "",
+          "limit": null
+        },
+        {
+          "name": "Regions marked with edge finder",
+          "value": 3,
+          "unit": "",
+          "limit": null
+        },
+        {
+          "name": "Smallest marked region",
+          "value": 12,
+          "unit": "mm²",
+          "limit": 20
+        }
+      ],
+      "operator_message": "You marked 3 damaged areas. The AI found only 2. Check the third one.",
+      "technical_detail": "Missing-volume finder returned 2 regions (confidence high). A third region marked by the operator (12 mm², 0.8 mm deep) is below the model's detection size of 20 mm², so it was dropped.",
+      "ai_decision": {
+        "ai_function_key": "region_detection",
+        "what": "2 repair regions found",
+        "confidence": "high",
+        "confidence_value": 0.88,
+        "explanation_type": "overlay",
+        "unfamiliar": false,
+        "is_correct": false
+      },
+      "ground_truth": {
+        "root_cause": "Region smaller than the model's minimum detection size (AI miss).",
+        "consequence_if_ignored": "One damaged area is left unrepaired."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "add_missing_region_manually",
+          "flag_ai_wrong",
+          "confirm_three_regions"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "rescan_area"
+        ],
+        "wrong_actions": [
+          "confirm_ai_regions_only"
+        ],
+        "resolved_when": "Three regions confirmed."
+      },
+      "help_content": {
+        "hints": [
+          "Your marks and the AI disagree. Your marks come from touching the real part.",
+          "Look at the third mark on the deviation map: is there a small dent?",
+          "Add the region with 'Add region from my marks', then confirm all three."
+        ],
+        "who_knows": [
+          "ml_defect_detection"
+        ],
+        "glossary": [
+          "repair region",
+          "deviation map",
+          "detection limit"
+        ]
+      },
+      "literature": "Automatic detection of under-filled regions from point clouds: Pang et al. in Georgousis et al. 2026.",
+      "resolution_script": [
+        "Your marks are right: the AI missed a small area.",
+        "Open the deviation map at your third mark.",
+        "Press 'Add region from my marks'.",
+        "Press 'AI was wrong' and choose 'missed area'.",
+        "Confirm all three regions, then press 'Problem solved'."
+      ],
+      "false_alarm_is_correct": false
+    },
+    {
+      "id": "WAAM-ML-02",
+      "variant": 2,
+      "process": "WAAM",
+      "cell_profile_id": "waam-repair",
+      "knowledge_domain": "ml_defect_detection",
+      "title": "AI sees damage on a shiny, intact surface",
+      "error_code": "E-WAAM-302",
+      "severity": "warning",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "prepare",
+        "step": "confirm_regions",
+        "offset_s": 3
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:waam-01",
+        "submodel_id_short": "QualityEvents",
+        "element_path": "QualityEvents/RegionDetection/Result",
+        "semantic_id": "urn:weldsense:semantic:quality:region-detection:1-0"
+      },
+      "source_asset": "scanner",
+      "signals": [
+        {
+          "name": "Regions found by AI",
+          "value": 3,
+          "unit": "",
+          "limit": null
+        },
+        {
+          "name": "Regions marked with edge finder",
+          "value": 2,
+          "unit": "",
+          "limit": null
+        },
+        {
+          "name": "Scan points missing in region 3",
+          "value": 41,
+          "unit": "%",
+          "limit": 10
+        }
+      ],
+      "operator_message": "The AI found a third damaged area where you marked nothing. It may be a scan error.",
+      "technical_detail": "Region 3 lies on a polished surface where 41% of scan points are missing; the missing points look like lost volume to the model. Confidence medium.",
+      "ai_decision": {
+        "ai_function_key": "region_detection",
+        "what": "3 repair regions found (region 3 on the polished face)",
+        "confidence": "medium",
+        "confidence_value": 0.64,
+        "explanation_type": "overlay",
+        "unfamiliar": false,
+        "is_correct": false
+      },
+      "ground_truth": {
+        "root_cause": "Reflective surface caused missing scan data (false region).",
+        "consequence_if_ignored": "Material deposited on an intact surface."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "remove_false_region",
+          "flag_ai_wrong",
+          "rescan_shiny_area_if_needed"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "inspect_part_by_hand"
+        ],
+        "wrong_actions": [
+          "confirm_all_ai_regions"
+        ],
+        "resolved_when": "Only the two real regions are confirmed."
+      },
+      "help_content": {
+        "hints": [
+          "Shiny metal confuses the scanner. Holes in the scan can look like damage.",
+          "Feel or look at the part where region 3 is. Is it really damaged?",
+          "If not, remove region 3, press 'AI was wrong', and confirm the other two."
+        ],
+        "who_knows": [
+          "ml_defect_detection"
+        ],
+        "glossary": [
+          "scan coverage",
+          "reflective surface",
+          "false alarm"
+        ]
+      },
+      "literature": "Scanning challenges on reflective surfaces: Li et al. 2026; region segmentation: Georgousis et al. 2026.",
+      "resolution_script": [
+        "Region 3 is probably a scan error on the shiny surface.",
+        "Look at the part there. Is it really damaged?",
+        "If not, press 'Remove region' on region 3.",
+        "Press 'AI was wrong' and choose 'scan error'.",
+        "Confirm the two real regions, then press 'Problem solved'."
+      ],
+      "false_alarm_is_correct": true
+    },
+    {
+      "id": "WAAM-ML-03",
+      "variant": 3,
+      "process": "WAAM",
+      "cell_profile_id": "waam-repair",
+      "knowledge_domain": "ml_defect_detection",
+      "title": "Build plan from AI is uncertain",
+      "error_code": "E-WAAM-303",
+      "severity": "warning",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "preview",
+        "step": "params",
+        "offset_s": 2
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:waam-01",
+        "submodel_id_short": "QualityEvents",
+        "element_path": "QualityEvents/BuildPlanner/Proposal",
+        "semantic_id": "urn:weldsense:semantic:quality:build-proposal:1-0"
+      },
+      "source_asset": "robot",
+      "signals": [
+        {
+          "name": "Proposed layers",
+          "value": 7,
+          "unit": "",
+          "limit": null
+        },
+        {
+          "name": "Likely range",
+          "value": "5 - 9",
+          "unit": "layers",
+          "limit": null
+        },
+        {
+          "name": "Similar past repairs",
+          "value": 1,
+          "unit": "",
+          "limit": 5
+        }
+      ],
+      "operator_message": "The AI proposes 7 layers but is not sure: it has seen only one repair like this.",
+      "technical_detail": "Bead-geometry regressor proposes 7 layers at 2.0 mm with a wide 90% interval (5-9 layers); the thin-wall geometry is outside most of the training data (only 1 similar case). Models trained on single beads on flat plates transfer poorly to such geometry.",
+      "ai_decision": {
+        "ai_function_key": "param_proposal",
+        "what": "7 layers, 2.0 mm layer height, 200 °C max interpass",
+        "confidence": "low",
+        "confidence_value": 0.42,
+        "explanation_type": "similar_cases",
+        "unfamiliar": true,
+        "is_correct": false
+      },
+      "ground_truth": {
+        "root_cause": "Too little training data for this geometry; the real need is 9 layers.",
+        "consequence_if_ignored": "Repair ends too low; rework needed."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "do_not_accept_blindly",
+          "use_qualified_recipe_or_ask_engineer",
+          "plan_layer_scan_checks"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "choose_upper_end_of_range"
+        ],
+        "wrong_actions": [
+          "accept_proposal_without_check"
+        ],
+        "resolved_when": "Plan chosen with a qualified recipe or engineer approval, with layer checks on."
+      },
+      "help_content": {
+        "hints": [
+          "A wide range means the AI is guessing.",
+          "Open 'Similar past repairs': only one example looks like this part.",
+          "Use the approved recipe for thin walls (or ask the engineer) and turn on the layer checks."
+        ],
+        "who_knows": [
+          "ml_defect_detection",
+          "welding_process"
+        ],
+        "glossary": [
+          "confidence range",
+          "similar cases",
+          "recipe"
+        ]
+      },
+      "literature": "Uncertainty rarely reported; offline models trained on single beads: Georgousis et al. 2026.",
+      "resolution_script": [
+        "The AI is guessing: it saw only one repair like this.",
+        "Do not accept 7 layers yet.",
+        "Press 'Use approved recipe' and choose 'Thin wall'.",
+        "Turn on 'Check every layer'.",
+        "Press 'Problem solved' and write which recipe you chose."
+      ],
+      "false_alarm_is_correct": false
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+import { useEffect, useState } from "react";
+import { useCell } from "../../controllers/CellController.jsx";
+import { Icon } from "../components/Icon.jsx";
+import { Modal } from "../components/overlays.jsx";
+import { AiBadge, Button, Confidence, Field, TextArea } from "../components/primitives.jsx";
+
+/** Operator confirms or overrides the AI-SPECTO verdict. The operator has the final say. */
+export function InspectionModal({ item, onClose }) {
+  const { actions } = useCell();
+  const [verdict, setVerdict] = useState(null);
+  const [comment, setComment] = useState("");
+  useEffect(() => { setVerdict(null); setComment(""); }, [item?.id]);
+  if (!item) return null;
+
+  const ai = item.inspection;
+  const disagrees = verdict && verdict !== ai.aiVerdict;
+
+  function confirm() {
+    actions.confirmInspection(item.id, verdict, comment);
+    onClose();
+  }
+
+  return (
+    <Modal open size="lg" title={`Check assembly ${item.id}`} eyebrow="Quality check" onClose={onClose}
+      footer={<><Button variant="ghost" onClick={onClose}>Later</Button><Button variant="accent" size="lg" icon="check" disabled={!verdict || (disagrees && !comment.trim())} onClick={confirm}>Save my check</Button></>}>
+      <div className="inspect">
+        <figure className="scan-mock" aria-label="3D scan of the weld bead (simulated)">
+          <svg viewBox="0 0 320 120" role="img" aria-hidden="true">
+            <rect x="10" y="40" width="140" height="40" fill="#d9d9d9" stroke="#939393" />
+            <rect x="170" y="40" width="140" height="40" fill="#d9d9d9" stroke="#939393" />
+            <path d="M150 40 Q160 30 170 40 L170 80 Q160 90 150 80 Z" fill="#b5b5b5" stroke="#5c5c5c" />
+            {ai.aiVerdict !== "ok" && <ellipse cx="160" cy="78" rx="34" ry="12" fill="rgba(238,32,32,.25)" stroke="#ee2020" strokeDasharray="4 3" />}
+          </svg>
+          <figcaption>Scan of top and root side (simulated){ai.aiVerdict !== "ok" && " — red area: where the AI looked"}</figcaption>
+        </figure>
+
+        <section className={`callout ${ai.aiVerdict === "ok" ? "callout-positive" : "callout-error"}`}>
+          <Icon name={ai.aiVerdict === "ok" ? "check" : "alert"} />
+          <div>
+            <strong>AI-SPECTO says: {ai.aiVerdict === "ok" ? "OK" : "NOT OK"} <AiBadge /></strong>
+            {ai.findings.map((f) => <p key={f.area}>{f.area}: {f.note} <Confidence value={f.confidence} /></p>)}
+          </div>
+        </section>
+
+        <fieldset className="verdict">
+          <legend>Look at the part. What do you think?</legend>
+          <label className={`choice ${verdict === "ok" ? "is-selected" : ""}`}><input type="radio" name="verdict" checked={verdict === "ok"} onChange={() => setVerdict("ok")} /><Icon name="check" size={28} /><span><strong>OK</strong><small>The weld is good.</small></span></label>
+          <label className={`choice ${verdict === "nok" ? "is-selected" : ""}`}><input type="radio" name="verdict" checked={verdict === "nok"} onChange={() => setVerdict("nok")} /><Icon name="close" size={28} /><span><strong>NOT OK</strong><small>The weld has a defect.</small></span></label>
+        </fieldset>
+
+        <Field label={disagrees ? "You disagree with the AI — please say what you see" : "Comment (optional)"} id="insp-comment">
+          <TextArea id="insp-comment" rows={3} value={comment} onChange={(e) => setComment(e.target.value)} />
+        </Field>
+      </div>
+    </Modal>
+  );
+}

@@ -1,0 +1,266 @@
+{
+  "file_version": "1.0",
+  "process": "WAAM",
+  "knowledge_domain": "welding_process",
+  "alarms": [
+    {
+      "id": "WAAM-WP-01",
+      "variant": 1,
+      "process": "WAAM",
+      "cell_profile_id": "waam-repair",
+      "knowledge_domain": "welding_process",
+      "title": "Part too hot for the next layer",
+      "error_code": "E-WAAM-101",
+      "severity": "warning",
+      "stop_behaviour": "hold_current_step",
+      "trigger": {
+        "stage": "run",
+        "step": "build",
+        "offset_s": 0,
+        "layer": 4
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:waam-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/InterpassTemperatureHigh",
+        "semantic_id": "urn:weldsense:semantic:alarm:interpass-high:1-0"
+      },
+      "source_asset": "pyrometer",
+      "signals": [
+        {
+          "name": "Interpass temperature",
+          "value": 310,
+          "unit": "°C",
+          "limit": 200
+        },
+        {
+          "name": "Waiting time so far",
+          "value": 240,
+          "unit": "s",
+          "limit": null
+        }
+      ],
+      "operator_message": "The part is still too hot. The robot is waiting before layer 4.",
+      "technical_detail": "Interpass temperature 310 °C after 4 minutes of waiting; the limit is 200 °C. The small repair area on a thin wall holds heat. Starting now would widen and lower the bead and coarsen the grain structure.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Heat accumulation in a thin section (simulated).",
+        "consequence_if_ignored": "Wider, lower beads; worse microstructure; distortion."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "keep_waiting",
+          "do_not_override_wait"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "increase_wait_time"
+        ],
+        "wrong_actions": [
+          "override_and_start_next_layer",
+          "lower_temperature_limit_off_screen"
+        ],
+        "resolved_when": "Temperature drops below 200 °C and the next layer starts."
+      },
+      "help_content": {
+        "hints": [
+          "Waiting is normal here. Hot metal makes the next layer run and sag.",
+          "Watch the temperature curve; it should go down towards the dashed line.",
+          "Keep waiting. Do not force the next layer. If it does not cool within 10 minutes, ask the engineer."
+        ],
+        "who_knows": [
+          "welding_process"
+        ],
+        "glossary": [
+          "interpass temperature",
+          "heat build-up",
+          "layer"
+        ]
+      },
+      "literature": "Interpass temperature control and heat accumulation in DED-Arc: Georgousis et al. 2026.",
+      "resolution_script": [
+        "This wait is normal. Do not force the next layer.",
+        "Watch the temperature curve go down to the dashed 200 °C line.",
+        "Keep the cell door closed so the part cools evenly.",
+        "If it is still above 200 °C after 10 minutes, tell the engineer.",
+        "When the next layer starts by itself, press 'Problem solved'."
+      ],
+      "false_alarm_is_correct": false
+    },
+    {
+      "id": "WAAM-WP-02",
+      "variant": 2,
+      "process": "WAAM",
+      "cell_profile_id": "waam-repair",
+      "knowledge_domain": "welding_process",
+      "title": "Layers getting lower than planned",
+      "error_code": "E-WAAM-102",
+      "severity": "warning",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "run",
+        "step": "build",
+        "offset_s": 5,
+        "layer": 4
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:waam-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/LayerHeightDrift",
+        "semantic_id": "urn:weldsense:semantic:alarm:layer-height-drift:1-0"
+      },
+      "source_asset": "scanner",
+      "signals": [
+        {
+          "name": "Layer 4 height vs plan",
+          "value": -0.6,
+          "unit": "mm",
+          "limit": -0.3
+        },
+        {
+          "name": "Total height short after 4 layers",
+          "value": -1.4,
+          "unit": "mm",
+          "limit": null
+        }
+      ],
+      "operator_message": "Each layer is a bit lower than planned. The repair will end too low.",
+      "technical_detail": "Layer scan: layer heights 2.0, 1.8, 1.6, 1.4 mm against a planned 2.0 mm. Heat build-up makes the bead flatter. At this rate the repair ends 2.5 mm short of the CAD surface plus machining allowance.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Heat accumulation flattens the beads (simulated).",
+        "consequence_if_ignored": "Repair below final size after machining."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "accept_extra_layer_proposal",
+          "check_interpass_wait"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "pause_after_layer"
+        ],
+        "wrong_actions": [
+          "ignore_and_continue"
+        ],
+        "resolved_when": "Plan updated with an extra layer, or longer interpass wait accepted."
+      },
+      "help_content": {
+        "hints": [
+          "Hot layers spread out and get lower. This adds up over layers.",
+          "Look at the layer height chart: the bars get shorter each layer.",
+          "Accept the proposal to add one layer, and let the part cool longer between layers."
+        ],
+        "who_knows": [
+          "welding_process"
+        ],
+        "glossary": [
+          "layer height",
+          "heat build-up",
+          "machining allowance"
+        ]
+      },
+      "literature": "Layer drift from heat accumulation, single-bead models not representative: Georgousis et al. 2026.",
+      "resolution_script": [
+        "The layers get lower because the part is hot.",
+        "Open the layer height chart: each bar is shorter.",
+        "Accept the proposal 'Add 1 layer'.",
+        "Set the interpass wait to 'Long'.",
+        "Press 'Problem solved' and write what you changed."
+      ],
+      "false_alarm_is_correct": false
+    },
+    {
+      "id": "WAAM-WP-03",
+      "variant": 3,
+      "process": "WAAM",
+      "cell_profile_id": "waam-repair",
+      "knowledge_domain": "welding_process",
+      "title": "Dark, rough bead: gas protection lost",
+      "error_code": "E-WAAM-103",
+      "severity": "error",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "run",
+        "step": "build",
+        "offset_s": 8,
+        "layer": 2
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:waam-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/ShieldingDisturbed",
+        "semantic_id": "urn:weldsense:semantic:alarm:shielding-disturbed:1-0"
+      },
+      "source_asset": "psu",
+      "signals": [
+        {
+          "name": "Gas flow",
+          "value": 15,
+          "unit": "L/min",
+          "limit": 12
+        },
+        {
+          "name": "Cell door",
+          "value": "open",
+          "unit": "",
+          "limit": "closed"
+        },
+        {
+          "name": "Spatter events (layer 2)",
+          "value": 22,
+          "unit": "per min",
+          "limit": 8
+        }
+      ],
+      "operator_message": "Layer 2 looks dark and rough at the edge. Air is reaching the weld. Paused after this layer.",
+      "technical_detail": "Gas flow is normal, but the cell door was opened and a draft reached the torch at the part edge. Discolouration (oxidation) and increased spatter at the edge; risk of porosity in layer 2.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Draft from the open cell door blew the shielding gas away (simulated).",
+        "consequence_if_ignored": "Oxidised, porous layers inside the repair."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "close_cell_door",
+          "check_nozzle",
+          "mark_layer_for_inspection"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "remove_oxide_before_next_layer"
+        ],
+        "wrong_actions": [
+          "continue_next_layer_without_check",
+          "increase_current"
+        ],
+        "resolved_when": "Door closed, nozzle checked, layer 2 marked for inspection."
+      },
+      "help_content": {
+        "hints": [
+          "The gas is flowing, but wind is blowing it away from the weld.",
+          "Check the cell door and anything that makes a draft near the torch.",
+          "Close the door, check the nozzle, mark layer 2 for inspection, then continue."
+        ],
+        "who_knows": [
+          "welding_process"
+        ],
+        "glossary": [
+          "shielding gas",
+          "oxidation",
+          "draft"
+        ]
+      },
+      "literature": "Shielding and porosity: weld defects document; in-situ defect detection in DED-Arc: Georgousis et al. 2026.",
+      "resolution_script": [
+        "Air is reaching the weld. The build pauses after this layer.",
+        "Close the cell door.",
+        "Look into the nozzle and remove spatter.",
+        "Mark layer 2 'Check needed'.",
+        "Press 'Continue build'.",
+        "Press 'Problem solved' and write 'door closed, nozzle cleaned'."
+      ],
+      "false_alarm_is_correct": false
+    }
+  ]
+}

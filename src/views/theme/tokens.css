@@ -1,0 +1,80 @@
+/*
+ * Design tokens modelled on the HMI SYSTEMS control set (docs.hmisystems.io):
+ * light surfaces, near-black ink buttons, orange #ff7514 for selection/focus,
+ * square shapes, uppercase control labels, monospaced type, and lamps in
+ * red / blue / green / yellow. Values are re-declared here (no vendor files
+ * are bundled; see README > Design system).
+ *
+ * Accessibility adjustments for older operators: 17px base, 48px targets,
+ * text never placed in orange on white (contrast 2.9:1) — orange is used as
+ * a fill behind dark ink, or as a border/indicator.
+ */
+:root {
+  color-scheme: light;
+
+  /* ink / controls */
+  --ink: #1e1e1e;
+  --ink-hover: #343434;
+  --ink-active: #484848;
+  --ink-muted: #5c5c5c;
+  --on-ink: #ffffff;
+
+  /* accent (selected, focus, primary call to action) */
+  --accent: #ff7514;
+  --accent-hover: #ff9245;
+  --accent-active: #ffae75;
+  --accent-tint: #fff1e7;
+
+  /* surfaces */
+  --bg: #f4f4f4;
+  --surface: #ffffff;
+  --field: #f1f1f1;
+  --line: #dcdcdc;
+  --line-strong: #939393;
+  --disabled-bg: #f1f1f1;
+  --disabled-fg: #8a8a8a; /* darker than the kit's #bcbcbc for legibility */
+
+  /* lamps (HMI SYSTEMS Lamp: error / active / positive / warning) */
+  --lamp-error: #ee2020;
+  --lamp-active: #0c33fd;
+  --lamp-positive: #03ab00;
+  --lamp-warning: #fdd400;
+  --lamp-off: #e6e6e6;
+  --lamp-ring: #bebebe;
+
+  /* text-safe variants of the lamp colours */
+  --text-error: #b30f0f;
+  --text-positive: #026b00;
+  --text-active: #0a29c9;
+  --text-warning: #6b5600;
+  --tint-error: #fdeaea;
+  --tint-positive: #e7f6e7;
+  --tint-warning: #fff8d6;
+  --tint-active: #e9edff;
+
+  /* safety */
+  --estop-red: #d13400;
+  --estop-yellow: #ffd600;
+
+  /* AI content is always marked with this hue so operators can tell it apart */
+  --ai: #6a3fd1;
+  --tint-ai: #f1ecfc;
+
+  --font-mono: "IBM Plex Mono", "DEF Mono", ui-monospace, Consolas, monospace;
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+
+  --fs-xs: 0.8125rem;
+  --fs-sm: 0.9375rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.625rem;
+  --fs-xxl: 2.125rem;
+
+  --radius: 4px;
+  --gap: 16px;
+  --target: 48px;
+  --navbar-h: 64px;
+  --statusbar-h: 56px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.22);
+}

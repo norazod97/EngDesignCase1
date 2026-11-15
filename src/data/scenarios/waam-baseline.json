@@ -1,0 +1,28 @@
+{
+  "scenario_id": "waam-baseline",
+  "version": "1.0",
+  "process": "WAAM",
+  "cell_profile_id": "waam-repair",
+  "description": "One normal WAAM repair with no anomaly. Alarm trials reuse this timeline and inject one alarm at the alarm's trigger point. Build time is compressed for the study (one layer about 20 s).",
+  "part": { "part_id": "SHAFT-BLOCK-07", "material": "S355 steel", "cad": "shaft-block-07-intact.step", "repair_regions": 2 },
+  "aas_shell_id": "urn:weldsense:aas:cell:waam-01",
+  "timeline": [
+    { "t_s": 0,   "stage": "prepare", "step": "mount",           "event": "step_started",   "message": "Mount the part in the jaws as shown." },
+    { "t_s": 40,  "stage": "prepare", "step": "scan",            "event": "step_started",   "message": "Guide the robot with the scanner over the part." },
+    { "t_s": 90,  "stage": "prepare", "step": "scan",            "event": "scan_coverage",  "value": 0.97 },
+    { "t_s": 92,  "stage": "prepare", "step": "scan",            "event": "ai_decision",    "ai_function_key": "cad_alignment", "what": "Scan lined up with the drawing (error 0.2 mm)", "confidence": "high", "confidence_value": 0.95, "explanation_type": "overlay", "is_correct": true },
+    { "t_s": 100, "stage": "prepare", "step": "mark",            "event": "step_started",   "message": "Mark the edges of the damaged areas with the edge finder." },
+    { "t_s": 140, "stage": "prepare", "step": "confirm_regions", "event": "ai_decision",    "ai_function_key": "region_detection", "what": "2 repair regions found", "confidence": "high", "confidence_value": 0.9, "explanation_type": "overlay", "is_correct": true },
+    { "t_s": 160, "stage": "preview", "step": "params",          "event": "ai_decision",    "ai_function_key": "param_proposal", "what": "6 layers, 2.0 mm each, max interpass 200 °C", "confidence": "high", "confidence_value": 0.86, "explanation_type": "similar_cases", "is_correct": true },
+    { "t_s": 175, "stage": "preview", "step": "params",          "event": "awaiting_operator", "message": "Check the plan and press 'Start build'." },
+    { "t_s": 185, "stage": "run",     "step": "build",           "event": "layer",          "layer": 1, "height_mm": 2.0, "interpass_C": 140 },
+    { "t_s": 205, "stage": "run",     "step": "build",           "event": "layer",          "layer": 2, "height_mm": 2.0, "interpass_C": 165 },
+    { "t_s": 225, "stage": "run",     "step": "build",           "event": "layer",          "layer": 3, "height_mm": 1.9, "interpass_C": 180 },
+    { "t_s": 245, "stage": "run",     "step": "build",           "event": "layer",          "layer": 4, "height_mm": 1.9, "interpass_C": 190 },
+    { "t_s": 265, "stage": "run",     "step": "build",           "event": "layer",          "layer": 5, "height_mm": 2.0, "interpass_C": 195 },
+    { "t_s": 285, "stage": "run",     "step": "build",           "event": "layer",          "layer": 6, "height_mm": 2.0, "interpass_C": 195 },
+    { "t_s": 300, "stage": "inspect", "step": "final_scan",      "event": "ai_decision",    "ai_function_key": "layer_drift", "what": "Repair height reached (+1.1 mm machining allowance)", "confidence": "high", "confidence_value": 0.92, "explanation_type": "overlay", "is_correct": true },
+    { "t_s": 315, "stage": "inspect", "step": "ndt",             "event": "awaiting_operator", "message": "Record the NDT method and result." },
+    { "t_s": 335, "stage": "review",  "step": "review",          "event": "summary",        "message": "Repair done, ready for machining." }
+  ]
+}

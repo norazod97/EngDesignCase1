@@ -1,0 +1,250 @@
+{
+  "file_version": "1.0",
+  "process": "WAAM",
+  "knowledge_domain": "robot_programming",
+  "alarms": [
+    {
+      "id": "WAAM-RP-01",
+      "variant": 1,
+      "process": "WAAM",
+      "cell_profile_id": "waam-repair",
+      "knowledge_domain": "robot_programming",
+      "title": "Scan does not line up with the CAD",
+      "error_code": "E-WAAM-201",
+      "severity": "error",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "prepare",
+        "step": "scan",
+        "offset_s": 6
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:waam-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/RegistrationError",
+        "semantic_id": "urn:weldsense:semantic:alarm:registration-error:1-0"
+      },
+      "source_asset": "scanner",
+      "signals": [
+        {
+          "name": "Alignment error (mean)",
+          "value": 3.1,
+          "unit": "mm",
+          "limit": 0.5
+        },
+        {
+          "name": "Part rotation in jaws",
+          "value": 2.2,
+          "unit": "°",
+          "limit": 0.5
+        }
+      ],
+      "operator_message": "The scanned part and the drawing do not line up. The repair would land in the wrong place.",
+      "technical_detail": "Scan-to-CAD registration residual 3.1 mm; the best fit shows the part rotated 2.2° in the jaws. The toolpath is generated in the CAD frame, so material would be deposited beside the repair region.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Part clamped slightly rotated (simulated).",
+        "consequence_if_ignored": "Material deposited off the repair area; part ruined."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "remount_part_with_guide",
+          "rescan",
+          "check_alignment_ok"
+        ],
+        "acceptable_actions": [
+          "ask_for_help"
+        ],
+        "wrong_actions": [
+          "continue_to_marking",
+          "dismiss_alarm"
+        ],
+        "resolved_when": "Alignment error below 0.5 mm."
+      },
+      "help_content": {
+        "hints": [
+          "The robot follows the drawing. If the part sits crooked, it welds in the wrong place.",
+          "Look at the overlay: the grey drawing and the blue scan are turned against each other.",
+          "Loosen the jaws, line the part up with the guide marks, clamp again and scan again."
+        ],
+        "who_knows": [
+          "robot_programming"
+        ],
+        "glossary": [
+          "CAD",
+          "alignment",
+          "jaws"
+        ]
+      },
+      "literature": "Point-cloud registration to CAD in robotic repair cells: Li et al. 2026.",
+      "resolution_script": [
+        "Do not continue: the part sits crooked in the jaws.",
+        "Open the jaws a little.",
+        "Turn the part until it lines up with the guide marks.",
+        "Close the jaws again.",
+        "Scan the part again. The error must be 0.5 mm or less.",
+        "When it is green, press 'Problem solved'."
+      ],
+      "false_alarm_is_correct": false
+    },
+    {
+      "id": "WAAM-RP-02",
+      "variant": 2,
+      "process": "WAAM",
+      "cell_profile_id": "waam-repair",
+      "knowledge_domain": "robot_programming",
+      "title": "Toolpath crosses a clamping jaw",
+      "error_code": "E-WAAM-202",
+      "severity": "error",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "preview",
+        "step": "params",
+        "offset_s": 4
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:waam-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/PathCollision",
+        "semantic_id": "urn:weldsense:semantic:alarm:path-collision:1-0"
+      },
+      "source_asset": "robot",
+      "signals": [
+        {
+          "name": "Path start point distance to jaw 2",
+          "value": -3,
+          "unit": "mm",
+          "limit": 15
+        }
+      ],
+      "operator_message": "The first bead would start on top of a clamping jaw. Change the start point first.",
+      "technical_detail": "The repair region reaches the clamped edge; the generated toolpath starts 3 mm inside jaw 2's envelope. Run-in and torch clearance need at least 15 mm.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Repair region next to the clamp; start point not moved (simulated).",
+        "consequence_if_ignored": "Torch hits the jaw or welds the part to the jaw."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "move_start_point_away_from_jaw",
+          "preview_path_again"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "remount_part_with_repair_away_from_jaws"
+        ],
+        "wrong_actions": [
+          "start_build_anyway"
+        ],
+        "resolved_when": "Path preview shows at least 15 mm clearance to all jaws."
+      },
+      "help_content": {
+        "hints": [
+          "The path starts where the jaw is. The torch cannot go there.",
+          "In the path preview, find the green start dot and the red jaw area.",
+          "Drag the start point to the other end of the region (or remount the part), then preview again."
+        ],
+        "who_knows": [
+          "robot_programming"
+        ],
+        "glossary": [
+          "toolpath",
+          "start point",
+          "jaw"
+        ]
+      },
+      "literature": "Path planning adapted to arc deposition and repair without nominal toolpath: Georgousis et al. 2026 (Pang et al.).",
+      "resolution_script": [
+        "Do not start: the first bead would hit jaw 2.",
+        "Open the path preview. Find the green start dot.",
+        "Drag the start dot to the other end of the region.",
+        "Press 'Preview again'. All jaws must be 15 mm or more away.",
+        "When it is green, press 'Problem solved'."
+      ],
+      "false_alarm_is_correct": false
+    },
+    {
+      "id": "WAAM-RP-03",
+      "variant": 3,
+      "process": "WAAM",
+      "cell_profile_id": "waam-repair",
+      "knowledge_domain": "robot_programming",
+      "title": "Robot cannot reach part of layer 5",
+      "error_code": "E-WAAM-203",
+      "severity": "error",
+      "stop_behaviour": "pause_before_next_step",
+      "trigger": {
+        "stage": "preview",
+        "step": "params",
+        "offset_s": 6
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:waam-01",
+        "submodel_id_short": "AlarmEvents",
+        "element_path": "AlarmEvents/Active/Unreachable",
+        "semantic_id": "urn:weldsense:semantic:alarm:unreachable:1-0"
+      },
+      "source_asset": "robot",
+      "signals": [
+        {
+          "name": "Unreachable path segment (layer 5)",
+          "value": 35,
+          "unit": "mm",
+          "limit": 0
+        },
+        {
+          "name": "Axis 5 at limit",
+          "value": "yes",
+          "unit": "",
+          "limit": "no"
+        }
+      ],
+      "operator_message": "In layer 5 the robot cannot reach the inner corner with the right torch angle.",
+      "technical_detail": "Reachability check: at the inner corner of layer 5 the required torch orientation pushes axis 5 past its joint limit, so a 35 mm segment would be skipped. Rotating the part or relaxing the torch angle solves it.",
+      "ai_decision": null,
+      "ground_truth": {
+        "root_cause": "Part orientation leaves the inner corner outside the robot's reach (simulated).",
+        "consequence_if_ignored": "Missing material in the corner from layer 5 up."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "rotate_part_or_positioner",
+          "allow_wider_torch_angle",
+          "recheck_reachability"
+        ],
+        "acceptable_actions": [
+          "ask_for_help"
+        ],
+        "wrong_actions": [
+          "start_build_anyway",
+          "skip_segment"
+        ],
+        "resolved_when": "Reachability check passes for all layers."
+      },
+      "help_content": {
+        "hints": [
+          "The robot arm cannot bend far enough for one corner.",
+          "The red part of layer 5 in the preview shows where it cannot reach.",
+          "Turn the part 90° on the positioner (or allow a wider torch angle), then run the check again."
+        ],
+        "who_knows": [
+          "robot_programming"
+        ],
+        "glossary": [
+          "reach",
+          "joint limit",
+          "positioner"
+        ]
+      },
+      "literature": "Multi-robot layout and reachability in DED-Arc cells: Terzakis et al. 2025 (cited in Georgousis et al. 2026).",
+      "resolution_script": [
+        "Do not start: the robot cannot reach one corner in layer 5.",
+        "Open the preview: the red part shows where.",
+        "Turn the positioner by 90 degrees.",
+        "Press 'Check reach again'.",
+        "When all layers are green, press 'Problem solved'."
+      ],
+      "false_alarm_is_correct": false
+    }
+  ]
+}

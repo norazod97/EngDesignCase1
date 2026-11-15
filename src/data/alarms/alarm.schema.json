@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:weldsense:schema:alarm-file:1.0",
+  "title": "WeldSense simulated alarm file",
+  "description": "A file holds the alarm variants for one process and one knowledge domain. Alarms are simulated stand-ins for events that, in the real system, arrive from the cells through the AAS (digital twin) middleware.",
+  "type": "object",
+  "required": [
+    "file_version",
+    "process",
+    "knowledge_domain",
+    "alarms"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "file_version": {
+      "type": "string"
+    },
+    "process": {
+      "enum": [
+        "GMAW",
+        "WAAM"
+      ]
+    },
+    "knowledge_domain": {
+      "enum": [
+        "welding_process",
+        "robot_programming",
+        "ml_defect_detection"
+      ]
+    },
+    "alarms": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/alarm"
+      }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "English source text. Translations live in the frontend i18n files under the key alarm.<id>.<field>.",
+      "type": "string",
+      "maxLength": 400
+    },
+    "alarm": {
+      "type": "object",
+      "required": [
+        "id",
+        "variant",
+        "process",
+        "cell_profile_id",
+        "knowledge_domain",
+        "title",
+        "severity",
+        "stop_behaviour",
+        "trigger",
+        "aas",
+        "source_asset",
+        "operator_message",
+        "technical_detail",
+        "ground_truth",
+        "expected_response",
+        "help_content",
+        "literature",
+        "error_code",
+        "resolution_script"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(GMAW|WAAM)-(WP|RP|ML)-[0-9]{2}$"
+        },
+        "variant": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "process": {
+          "enum": [
+            "GMAW",
+            "WAAM"
+          ]
+        },
+        "cell_profile_id": {
+          "type": "string"
+        },
+        "knowledge_domain": {
+          "enum": [
+            "welding_process",
+            "robot_programming",
+            "ml_defect_detection"
+          ]
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "severity": {
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ]
+        },
+        "stop_behaviour": {
+          "description": "What the simulated cell does when the alarm fires.",
+          "enum": [
+            "none",
+            "pause_before_next_step",
+            "hold_current_step",
+            "emergency_stop"
+          ]
+        },
+        "trigger": {
+          "type": "object",
+          "required": [
+            "stage",
+            "step",
+            "offset_s"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "stage": {
+              "enum": [
+                "prepare",
+                "preview",
+                "run",
+                "inspect",
+                "review"
+              ]
+            },
+            "step": {
+              "type": "string",
+              "description": "Workflow step key from the cell profile."
+            },
+            "offset_s": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Seconds after the step starts."
+            },
+            "layer": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "WAAM only: layer at which it fires."
+            }
+          }
+        },
+        "aas": {
+          "description": "Where this event would live in the cell's Asset Administration Shell. Simulated identifiers.",
+          "type": "object",
+          "required": [
+            "shell_id",
+            "submodel_id_short",
+            "element_path",
+            "semantic_id"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "shell_id": {
+              "type": "string"
+            },
+            "submodel_id_short": {
+              "type": "string"
+            },
+            "element_path": {
+              "type": "string"
+            },
+            "semantic_id": {
+              "type": "string"
+            }
+          }
+        },
+        "source_asset": {
+          "type": "string",
+          "description": "Equipment key from the cell profile."
+        },
+        "signals": {
+          "description": "Simulated measurement values shown with the alarm.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value",
+              "unit"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "unit": {
+                "type": "string"
+              },
+              "limit": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "operator_message": {
+          "$ref": "#/$defs/text"
+        },
+        "technical_detail": {
+          "$ref": "#/$defs/text"
+        },
+        "ai_decision": {
+          "description": "Present when the alarm involves an AI decision card (always for ml_defect_detection).",
+          "type": [
+            "object",
+            "null"
+          ],
+          "required": [
+            "ai_function_key",
+            "what",
+            "confidence",
+            "explanation_type",
+            "unfamiliar",
+            "is_correct"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "ai_function_key": {
+              "type": "string"
+            },
+            "what": {
+              "type": "string"
+            },
+            "confidence": {
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ]
+            },
+            "confidence_value": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "explanation_type": {
+              "enum": [
+                "overlay",
+                "similar_cases",
+                "shap",
+                "heatmap",
+                "signal_timeline",
+                "rule"
+              ]
+            },
+            "unfamiliar": {
+              "type": "boolean"
+            },
+            "is_correct": {
+              "type": "boolean",
+              "description": "Ground truth: is the AI right? False = deliberate AI error."
+            }
+          }
+        },
+        "ground_truth": {
+          "type": "object",
+          "required": [
+            "root_cause",
+            "consequence_if_ignored"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "root_cause": {
+              "type": "string"
+            },
+            "consequence_if_ignored": {
+              "type": "string"
+            }
+          }
+        },
+        "expected_response": {
+          "type": "object",
+          "required": [
+            "correct_actions",
+            "wrong_actions"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "correct_actions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "acceptable_actions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "wrong_actions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "resolved_when": {
+              "type": "string"
+            }
+          }
+        },
+        "help_content": {
+          "description": "The ONE source of help content for both conditions: the chatbot is grounded on it, and the wizard uses it when playing colleagues. This keeps the information equal between conditions.",
+          "type": "object",
+          "required": [
+            "hints",
+            "who_knows"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "hints": {
+              "description": "Graded hints: 1 = nudge, 2 = what to check, 3 = what to do.",
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "$ref": "#/$defs/text"
+              }
+            },
+            "who_knows": {
+              "description": "Colleague expertise that matches this alarm (condition B).",
+              "type": "array",
+              "items": {
+                "enum": [
+                  "welding_process",
+                  "robot_programming",
+                  "ml_defect_detection",
+                  "team_lead"
+                ]
+              }
+            },
+            "glossary": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "literature": {
+          "type": "string"
+        },
+        "error_code": {
+          "type": "string",
+          "pattern": "^E-(GMAW|WAAM)-[0-9]{3}$",
+          "description": "Mock error code shown in the alarm window and quoted in the resolution script."
+        },
+        "resolution_script": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/text"
+          },
+          "description": "Step-by-step resolution the wizard sends when the participant asks for help (as the AI in the chatbot build, as the named colleague in the colleagues build). Same script in both builds."
+        },
+        "false_alarm_is_correct": {
+          "type": "boolean",
+          "description": "True when the right answer to this alarm is the 'False alarm' button (an AI false alarm)."
+        }
+      }
+    }
+  }
+}

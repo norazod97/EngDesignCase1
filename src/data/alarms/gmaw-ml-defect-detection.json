@@ -1,0 +1,280 @@
+{
+  "file_version": "1.0",
+  "process": "GMAW",
+  "knowledge_domain": "ml_defect_detection",
+  "alarms": [
+    {
+      "id": "GMAW-ML-01",
+      "variant": 1,
+      "process": "GMAW",
+      "cell_profile_id": "gmaw-fixtureless",
+      "knowledge_domain": "ml_defect_detection",
+      "title": "AI flags undercut that is not there",
+      "error_code": "E-GMAW-301",
+      "severity": "warning",
+      "stop_behaviour": "none",
+      "trigger": {
+        "stage": "inspect",
+        "step": "post_scan",
+        "offset_s": 4
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:gmaw-01",
+        "submodel_id_short": "QualityEvents",
+        "element_path": "QualityEvents/BeadCheck/Result",
+        "semantic_id": "urn:weldsense:semantic:quality:bead-check:1-0"
+      },
+      "source_asset": "profilometer",
+      "signals": [
+        {
+          "name": "Undercut depth from profile",
+          "value": 0.05,
+          "unit": "mm",
+          "limit": 0.5
+        }
+      ],
+      "operator_message": "The AI thinks there is undercut on the left edge. It is only medium sure.",
+      "technical_detail": "Image classifier: undercut, confidence 0.58. Heatmap focuses on a bright reflection on the bead. The laser profile at the same spot shows no undercut (0.05 mm, limit 0.5 mm).",
+      "ai_decision": {
+        "ai_function_key": "bead_defects",
+        "what": "Possible undercut on the left edge, 40-55 mm from the start",
+        "confidence": "medium",
+        "confidence_value": 0.58,
+        "explanation_type": "heatmap",
+        "unfamiliar": false,
+        "is_correct": false
+      },
+      "ground_truth": {
+        "root_cause": "Glare from a shiny spot fooled the image model (false alarm).",
+        "consequence_if_ignored": "Good part sent to rework or scrap for no reason."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "compare_heatmap_with_profile",
+          "inspect_bead_visually",
+          "flag_ai_wrong",
+          "accept_part"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "send_to_manual_inspection"
+        ],
+        "wrong_actions": [
+          "scrap_part",
+          "rework_without_checking"
+        ],
+        "resolved_when": "Operator overrules the AI with a reason, or the part goes to manual inspection."
+      },
+      "help_content": {
+        "hints": [
+          "The AI can be fooled by light reflections. Check before you act.",
+          "Look where the heatmap is red and compare with the bead profile at the same place.",
+          "If the profile and your eyes show no undercut, press 'AI was wrong' and accept the part."
+        ],
+        "who_knows": [
+          "ml_defect_detection"
+        ],
+        "glossary": [
+          "undercut",
+          "heatmap",
+          "confidence",
+          "false alarm"
+        ]
+      },
+      "literature": "Image-based defect CNNs and Grad-CAM explanations: Zhang et al. 2026; Satsangi et al. 2026. Trust calibration: van der Waa et al. 2021.",
+      "resolution_script": [
+        "Do not scrap the part yet.",
+        "Open the heatmap: the red spot is on a bright reflection.",
+        "Open the bead profile at the same place: depth 0.05 mm, limit 0.5 mm.",
+        "Look at the bead yourself. No undercut means the AI was wrong.",
+        "Press 'AI was wrong', choose 'reflection', and accept the part.",
+        "Press 'Problem solved' and write what you saw."
+      ],
+      "false_alarm_is_correct": true
+    },
+    {
+      "id": "GMAW-ML-02",
+      "variant": 2,
+      "process": "GMAW",
+      "cell_profile_id": "gmaw-fixtureless",
+      "knowledge_domain": "ml_defect_detection",
+      "title": "AI is unsure: unfamiliar material",
+      "error_code": "E-GMAW-302",
+      "severity": "warning",
+      "stop_behaviour": "none",
+      "trigger": {
+        "stage": "inspect",
+        "step": "post_scan",
+        "offset_s": 4
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:gmaw-01",
+        "submodel_id_short": "QualityEvents",
+        "element_path": "QualityEvents/BeadCheck/Result",
+        "semantic_id": "urn:weldsense:semantic:quality:bead-check:1-0"
+      },
+      "source_asset": "profilometer",
+      "signals": [
+        {
+          "name": "Material of this job",
+          "value": "galvanised steel",
+          "unit": "",
+          "limit": null
+        },
+        {
+          "name": "Materials in AI training data",
+          "value": "plain carbon steel",
+          "unit": "",
+          "limit": null
+        }
+      ],
+      "operator_message": "The AI says the bead is OK, but it has never seen this material before.",
+      "technical_detail": "Bead classifier output OK with confidence 0.61 and an out-of-distribution warning: the input features fall outside the training range (zinc-coated surface, different bead appearance). Galvanised steel is prone to porosity from zinc vapour.",
+      "ai_decision": {
+        "ai_function_key": "bead_defects",
+        "what": "Bead OK",
+        "confidence": "low",
+        "confidence_value": 0.61,
+        "explanation_type": "heatmap",
+        "unfamiliar": true,
+        "is_correct": false
+      },
+      "ground_truth": {
+        "root_cause": "Model trained only on plain steel; the bead has fine surface pores it cannot recognise.",
+        "consequence_if_ignored": "Porous weld accepted without inspection."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "do_not_rely_on_ai",
+          "send_to_manual_inspection",
+          "flag_ai_unsure"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "inspect_bead_visually"
+        ],
+        "wrong_actions": [
+          "accept_part_as_ok"
+        ],
+        "resolved_when": "Part sent to manual inspection."
+      },
+      "help_content": {
+        "hints": [
+          "'Unfamiliar' means the AI is guessing. Do not trust its OK.",
+          "This material was not in the examples the AI learned from.",
+          "Send the part to manual inspection and note that the material was new for the AI."
+        ],
+        "who_knows": [
+          "ml_defect_detection"
+        ],
+        "glossary": [
+          "training data",
+          "unfamiliar case",
+          "confidence"
+        ]
+      },
+      "literature": "Models fail when material or setup changes: Georgousis et al. 2026; Zhang et al. 2026 (generalisation).",
+      "resolution_script": [
+        "Do not trust this 'OK': the AI has not seen this material.",
+        "Read the warning: galvanised steel was not in its examples.",
+        "Mark the weld 'Check needed' and send it to manual inspection.",
+        "Press 'AI unsure' so the team knows.",
+        "Press 'Problem solved' and write 'sent to inspection'."
+      ],
+      "false_alarm_is_correct": false
+    },
+    {
+      "id": "GMAW-ML-03",
+      "variant": 3,
+      "process": "GMAW",
+      "cell_profile_id": "gmaw-fixtureless",
+      "knowledge_domain": "ml_defect_detection",
+      "title": "AI missed internal pores (found by NDT)",
+      "error_code": "E-GMAW-303",
+      "severity": "error",
+      "stop_behaviour": "none",
+      "trigger": {
+        "stage": "inspect",
+        "step": "ndt",
+        "offset_s": 2
+      },
+      "aas": {
+        "shell_id": "urn:weldsense:aas:cell:gmaw-01",
+        "submodel_id_short": "QualityEvents",
+        "element_path": "QualityEvents/CrossCheck/Mismatch",
+        "semantic_id": "urn:weldsense:semantic:quality:cross-check-mismatch:1-0"
+      },
+      "source_asset": "profilometer",
+      "signals": [
+        {
+          "name": "AI bead check",
+          "value": "OK (high confidence)",
+          "unit": "",
+          "limit": null
+        },
+        {
+          "name": "NDT result (RT)",
+          "value": "porosity cluster at 120 mm",
+          "unit": "",
+          "limit": null
+        }
+      ],
+      "operator_message": "The AI said OK, but the X-ray found pores inside the weld. The AI was wrong.",
+      "technical_detail": "Cross-check mismatch: bead classifier OK (0.91) from surface images and profile; radiographic test shows a porosity cluster below the surface. Surface sensors cannot see internal pores.",
+      "ai_decision": {
+        "ai_function_key": "bead_defects",
+        "what": "Bead OK",
+        "confidence": "high",
+        "confidence_value": 0.91,
+        "explanation_type": "heatmap",
+        "unfamiliar": false,
+        "is_correct": false
+      },
+      "ground_truth": {
+        "root_cause": "Internal porosity; the AI only sees the surface.",
+        "consequence_if_ignored": "Weak weld delivered; AI keeps being trusted for defects it cannot see."
+      },
+      "expected_response": {
+        "correct_actions": [
+          "quarantine_part",
+          "flag_ai_wrong",
+          "notify_quality"
+        ],
+        "acceptable_actions": [
+          "ask_for_help",
+          "open_replay_to_look_for_signal_signs"
+        ],
+        "wrong_actions": [
+          "accept_part",
+          "ignore_mismatch"
+        ],
+        "resolved_when": "Part quarantined and the AI miss recorded."
+      },
+      "help_content": {
+        "hints": [
+          "The X-ray result counts, not the AI. The AI cannot look inside the weld.",
+          "Keep this part apart from good parts.",
+          "Press 'AI was wrong', put the part in quarantine and tell quality."
+        ],
+        "who_knows": [
+          "ml_defect_detection"
+        ],
+        "glossary": [
+          "NDT",
+          "X-ray",
+          "porosity",
+          "cross-check"
+        ]
+      },
+      "literature": "Internal defects need radiographic/ultrasonic testing: Zhang et al. 2026; cross-check design: docs/04.",
+      "resolution_script": [
+        "The X-ray result counts, not the AI. The AI only sees the surface.",
+        "Put the part in the red quarantine box.",
+        "Press 'AI was wrong' and choose 'internal pores'.",
+        "Press 'Notify quality'.",
+        "Press 'Problem solved' and write 'part quarantined'."
+      ],
+      "false_alarm_is_correct": false
+    }
+  ]
+}

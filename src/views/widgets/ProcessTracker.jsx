@@ -4,6 +4,7 @@ import { ProgressBar } from "../components/primitives.jsx";
 
 const STATE_TEXT = {
   [CycleState.RUNNING]: "Running",
+  [CycleState.AWAITING_OPERATOR]: "Waiting for you",
   [CycleState.HALTED]: "Halted — needs you",
   [CycleState.WAITING]: "Waiting for documents",
   [CycleState.STOPPED]: "Stopped",
@@ -35,7 +36,7 @@ export function ProcessTracker({ cycle, compact = false }) {
       </ol>
       {!compact && currentJobId && (
         <div className="tracker-detail">
-          <ProgressBar value={stepProgress} label={`${step.label} progress`} />
+          {!step.operator && <ProgressBar value={stepProgress} label={`${step.label} progress`} />}
           <p>{step.hint}</p>
         </div>
       )}

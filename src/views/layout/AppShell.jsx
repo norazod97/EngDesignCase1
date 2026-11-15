@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { useCell } from "../../controllers/CellController.jsx";
+import { useCell, useCellSummary } from "../../controllers/CellController.jsx";
 import { useNotifications } from "../../controllers/NotificationController.jsx";
 import { load, save } from "../../services/storage.js";
 import { StopCycleButton, ToastStack } from "../components/overlays.jsx";
@@ -10,10 +10,10 @@ import { Navbar } from "./Navbar.jsx";
 import { HelpModal, MessagesPanel, NotificationsPanel } from "./Panels.jsx";
 import { SideMenu } from "./SideMenu.jsx";
 import { StatusBar } from "./StatusBar.jsx";
-import { CycleState } from "../../models/cellModel.js";
 
 export function AppShell() {
-  const { state, actions } = useCell();
+  const { actions } = useCell();
+  const { canStop } = useCellSummary();
   const { toasts, dismissToast, push } = useNotifications();
   const [menuOpen, setMenuOpen] = useState(false);
   const [panel, setPanel] = useState(null); // "notifications" | "messages" | "help"
@@ -36,8 +36,6 @@ export function AppShell() {
   const sendHelp = useCallback(({ target, note, context }) => {
     actions.log(`Help requested from ${target}.`, { note, ...context });
   }, [actions]);
-
-  const canStop = [CycleState.RUNNING, CycleState.HALTED, CycleState.WAITING].includes(state.cycle.state);
 
   return (
     <div className={`shell ${assistantOpen ? "has-assistant" : ""}`}>

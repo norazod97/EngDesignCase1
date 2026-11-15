@@ -43,12 +43,12 @@ export const CELLS = {
     area: "51.2",
     name: "Jigless GMAW cell",
     equipment: [
-      { id: "R1", name: "Handling robot 1", kind: "robot", model: "Doosan H2017", status: "idle", nextServiceDue: "2026-12-02" },
-      { id: "R2", name: "Handling robot 2", kind: "robot", model: "Doosan H2017", status: "idle", nextServiceDue: "2026-12-02" },
+      { id: "R1", name: "Handling robot 1", kind: "robot", model: "ABB IRB 4600", status: "idle", nextServiceDue: "2026-12-02" },
+      { id: "R2", name: "Handling robot 2", kind: "robot", model: "ABB IRB 6700", status: "idle", nextServiceDue: "2026-12-02" },
       { id: "R3", name: "Welding robot", kind: "robot", model: "Doosan H2017 + GMAW torch", status: "idle", nextServiceDue: "2026-11-16" },
       { id: "PS", name: "Welding power source", kind: "equipment", model: "GMAW power source", status: "idle", nextServiceDue: null },
       { id: "PF", name: "Profilometer camera", kind: "sensor", model: "Laser line profilometer", status: "idle", nextServiceDue: null },
-      { id: "AS", name: "AI-SPECTO scanner", kind: "sensor", model: "3D inspection", status: "idle", nextServiceDue: null },
+      { id: "AS", name: "AI inspection camera", kind: "sensor", model: "Industrial camera", status: "idle", nextServiceDue: null },
     ],
   },
 };

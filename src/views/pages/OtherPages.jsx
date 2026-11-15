@@ -105,7 +105,7 @@ export function LabelingPage() {
       <Card>
         <div className="placeholder">
           <Icon name="tag" size={40} />
-          <p><strong>Planned for the next iteration.</strong> Images from the profilometer and AI-SPECTO will appear here with the AI's attention map (SHAP). You mark what is really a defect with one tap.</p>
+          <p><strong>Planned for the next iteration.</strong> Images from the profilometer and the AI inspection will appear here with the AI's attention map (SHAP). You mark what is really a defect with one tap.</p>
           <Link to="/dashboard" className="btn btn-ghost btn-md"><span>Back to dashboard</span></Link>
         </div>
       </Card>

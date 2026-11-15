@@ -12,17 +12,26 @@ export const CycleState = Object.freeze({
   IDLE: "idle", // nothing started yet
   RUNNING: "running",
   WAITING: "waiting", // blocked on something the operator must sort out (e.g. missing WPS)
+  AWAITING_OPERATOR: "awaiting_operator", // at an operator step (press Weld, do the visual NDT)
   HALTED: "halted", // stopped by an alarm
   STOPPED: "stopped", // stopped by the operator (stop button)
   COMPLETE: "complete", // queue finished
 });
 
+// GMAW steps. Ids match the step keys used in src/data/alarms (trigger.step).
+// operator: true = the cell waits here until the operator acts.
 export const PROCESS_STEPS = [
-  { id: "detect", label: "Find parts", hint: "Cameras find the parts in the bin using the CAD model." },
-  { id: "pick", label: "Pick & align", hint: "Robots 1 and 2 pick the parts and hold them together." },
-  { id: "weld", label: "Weld", hint: "The welding robot follows the seam and adjusts in real time." },
-  { id: "scan", label: "AI-SPECTO scan", hint: "The 3D scanner checks the bead against the CAD." },
+  { id: "load", label: "Pick & align", hint: "Robots 1 and 2 pick the parts and hold them together." },
+  { id: "seam_scan", label: "Find the seam", hint: "The profilometer finds the seam." },
+  { id: "dry_run", label: "Dry run", hint: "The torch follows the path without welding." },
+  { id: "ready", label: "Ready to weld", hint: "Check the path, then press Weld.", operator: true },
+  { id: "weld", label: "Weld", hint: "The welding robot follows the seam." },
+  { id: "post_scan", label: "AI inspection", hint: "The AI checks the bead." },
+  { id: "ndt", label: "Visual NDT", hint: "Look at the weld and record OK or NOT OK.", operator: true },
 ];
+
+/** Cycle states in which the Stop button is available. */
+export const STOPPABLE_STATES = [CycleState.RUNNING, CycleState.AWAITING_OPERATOR, CycleState.HALTED, CycleState.WAITING];
 
 const MAX_LOG = 500;
 
@@ -89,7 +98,7 @@ function loadNextJob(state) {
 export function canStart(state) {
   if (!state.door.locked) return { ok: false, reason: "Lock the cell door first." };
   if (!state.bin.inEnvelope) return { ok: false, reason: "Move the parts bin back to its marked spot." };
-  if ([CycleState.RUNNING, CycleState.HALTED, CycleState.WAITING].includes(state.cycle.state)) return { ok: false, reason: "A cycle is already active." };
+  if (STOPPABLE_STATES.includes(state.cycle.state)) return { ok: false, reason: "A cycle is already active." };
   return { ok: true };
 }
 
@@ -138,11 +147,25 @@ export function cellReducer(state, event) {
       return withLog(s, EventCategory.PROCESS, `${state.cycle.currentJobId}: ${PROCESS_STEPS[stepIndex]?.label ?? "step"} started.`);
     }
 
+    case "cycle/await": {
+      const s = setEquipment({ ...state, cycle: { ...state.cycle, state: CycleState.AWAITING_OPERATOR } }, allIdle);
+      return withLog(s, EventCategory.PROCESS, `${state.cycle.currentJobId}: waiting for operator (${PROCESS_STEPS[state.cycle.stepIndex]?.label}).`);
+    }
+
+    case "cycle/operatorConfirm": {
+      const stepIndex = state.cycle.stepIndex + 1;
+      let s = { ...state, cycle: { ...state.cycle, state: CycleState.RUNNING, stepIndex, stepProgress: 0 } };
+      s = setEquipment(s, allRunning);
+      return withLog(s, EventCategory.OPERATOR, `${state.cycle.currentJobId}: operator confirmed "${PROCESS_STEPS[state.cycle.stepIndex]?.label}".`, { by: p.by });
+    }
+
     case "cycle/jobScanned": {
+      // AI inspection done: move to the Visual NDT step and wait for the operator.
       const jobId = state.cycle.currentJobId;
       let s = setJob(state, jobId, { status: JobStatus.AWAITING_REVIEW, inspection: { aiVerdict: p.verdict, findings: p.findings, scannedAt: new Date().toISOString() } });
-      s = withLog(s, EventCategory.QUALITY, `AI-SPECTO result for ${jobId}: ${p.verdict === "ok" ? "OK" : "NOT OK"}.`, { jobId, findings: p.findings });
-      return loadNextJob(s);
+      s = { ...s, cycle: { ...s.cycle, state: CycleState.AWAITING_OPERATOR, stepIndex: s.cycle.stepIndex + 1, stepProgress: 0 } };
+      s = setEquipment(s, allIdle);
+      return withLog(s, EventCategory.QUALITY, `AI inspection result for ${jobId}: ${p.verdict === "ok" ? "OK" : "NOT OK"}.`, { jobId, findings: p.findings });
     }
 
     case "cycle/halt": {
@@ -207,8 +230,12 @@ export function cellReducer(state, event) {
       const aiVerdict = state.jobProgress[p.jobId]?.inspection?.aiVerdict;
       const agree = p.operatorVerdict === aiVerdict;
       const finalStatus = p.operatorVerdict === "ok" ? JobStatus.DONE : JobStatus.REJECTED;
-      const s = setJob(state, p.jobId, { status: finalStatus, review: { operatorVerdict: p.operatorVerdict, agreesWithAi: agree, comment: p.comment, by: p.by } });
-      return withLog(s, EventCategory.QUALITY, `${p.jobId}: operator says ${p.operatorVerdict === "ok" ? "OK" : "NOT OK"} (${agree ? "agrees" : "disagrees"} with AI).`, { by: p.by, comment: p.comment });
+      let s = setJob(state, p.jobId, { status: finalStatus, review: { operatorVerdict: p.operatorVerdict, agreesWithAi: agree, comment: p.comment, by: p.by } });
+      s = withLog(s, EventCategory.QUALITY, `${p.jobId}: visual NDT ${p.operatorVerdict === "ok" ? "OK" : "NOT OK"} (${agree ? "agrees" : "disagrees"} with AI).`, { by: p.by, comment: p.comment });
+      // Visual NDT of the current assembly finishes it; the cell moves on.
+      const atNdt = PROCESS_STEPS[state.cycle.stepIndex]?.id === "ndt";
+      if (p.jobId === state.cycle.currentJobId && atNdt && state.cycle.state === CycleState.AWAITING_OPERATOR) s = loadNextJob(s);
+      return s;
     }
 
     case "request/log":

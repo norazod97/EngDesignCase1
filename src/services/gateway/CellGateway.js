@@ -14,6 +14,7 @@
  *   startCycle(jobs, checklist, by)
  *   stopCycle(by)
  *   resumeCycle(by)
+ *   confirmStep(by)                          operator completes an operator step (e.g. Weld)
  *   closeAlarm({ resolution, comment, stepsDone, by })
  *   skipBlockedJob(by)
  *   confirmInspection({ jobId, operatorVerdict, comment, by })
@@ -25,7 +26,7 @@
  */
 export const GATEWAY_METHODS = [
   "getSnapshot", "subscribe", "onEvent",
-  "setDoorLocked", "startCycle", "stopCycle", "resumeCycle",
+  "setDoorLocked", "startCycle", "stopCycle", "resumeCycle", "confirmStep",
   "closeAlarm", "skipBlockedJob", "confirmInspection", "logRequest",
 ];
 

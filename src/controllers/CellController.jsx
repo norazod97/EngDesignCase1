@@ -3,7 +3,7 @@
 import { createContext, useContext, useMemo, useSyncExternalStore } from "react";
 import { createCellGateway } from "../services/gateway/index.js";
 import { createWizardChannel } from "../services/wizardChannel.js";
-import { CycleState, PROCESS_STEPS } from "../models/cellModel.js";
+import { CycleState, PROCESS_STEPS, STOPPABLE_STATES } from "../models/cellModel.js";
 import { JobStatus } from "../models/job.js";
 import { useSession } from "./SessionController.jsx";
 
@@ -30,6 +30,7 @@ export function CellController({ cellId, children }) {
     start: (jobs, checklist) => gateway.startCycle(jobs, checklist, by),
     stop: () => gateway.stopCycle(by),
     resume: () => gateway.resumeCycle(by),
+    confirmStep: () => gateway.confirmStep(by),
     closeAlarm: (resolution, { comment = "", stepsDone = [] } = {}) => gateway.closeAlarm({ resolution, comment, stepsDone, by }),
     skipBlockedJob: () => gateway.skipBlockedJob(by),
     confirmInspection: (jobId, operatorVerdict, comment) => gateway.confirmInspection({ jobId, operatorVerdict, comment, by }),
@@ -52,14 +53,15 @@ export function useCellSummary() {
   const { jobs } = useSession();
   return useMemo(() => {
     const progress = Object.values(state.jobProgress);
-    const finished = progress.filter((p) => [JobStatus.DONE, JobStatus.REJECTED, JobStatus.AWAITING_REVIEW].includes(p.status)).length;
-    const awaitingReview = Object.entries(state.jobProgress)
-      .filter(([, p]) => p.status === JobStatus.AWAITING_REVIEW)
-      .map(([id, p]) => ({ id, ...p, job: state.jobs[id] }));
+    const finished = progress.filter((p) => [JobStatus.DONE, JobStatus.REJECTED].includes(p.status)).length;
     const { cycle } = state;
     const step = PROCESS_STEPS[cycle.stepIndex];
     const overall = cycle.currentJobId ? (cycle.stepIndex + cycle.stepProgress) / PROCESS_STEPS.length : 0;
-    const active = [CycleState.RUNNING, CycleState.HALTED, CycleState.WAITING, CycleState.STOPPED].includes(cycle.state);
-    return { total: jobs.length, finished, awaitingReview, step, overall, active, cycle };
+    const active = [...STOPPABLE_STATES, CycleState.STOPPED].includes(cycle.state);
+    const canStop = STOPPABLE_STATES.includes(cycle.state);
+    const waitingFor = cycle.state === CycleState.AWAITING_OPERATOR ? step?.id : null; // "ready" | "ndt"
+    // The assembly waiting for its visual NDT (with the AI inspection result).
+    const ndtItem = waitingFor === "ndt" ? { id: cycle.currentJobId, ...state.jobProgress[cycle.currentJobId], job: state.jobs[cycle.currentJobId] } : null;
+    return { total: jobs.length, finished, step, overall, active, canStop, waitingFor, ndtItem, cycle };
   }, [state, jobs]);
 }

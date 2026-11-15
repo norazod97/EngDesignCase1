@@ -2,10 +2,11 @@
 // and random-walk telemetry, and accepts Wizard-of-Oz commands so an
 // experimenter can inject alarms and AI events during a lab session.
 
-import { canResume, canStart, cellReducer, createCellState, CycleState, PROCESS_STEPS } from "../../models/cellModel.js";
+import { canResume, canStart, cellReducer, createCellState, CycleState, PROCESS_STEPS, STOPPABLE_STATES } from "../../models/cellModel.js";
 import { ALARM_TEMPLATES, AI_ADJUSTMENTS } from "../../mock/scenarios.js";
 
-const DEFAULT_STEP_SECONDS = { detect: 4, pick: 6, weld: 16, scan: 5 };
+// Operator steps (ready, ndt) have no duration: the cell waits for the operator.
+const DEFAULT_STEP_SECONDS = { load: 8, seam_scan: 5, dry_run: 8, weld: 16, post_scan: 5 };
 const TICK_MS = 500;
 
 const jitter = (base, spread) => +(base + (Math.random() - 0.5) * spread).toFixed(1);
@@ -76,7 +77,7 @@ export class MockCellGateway {
   };
 
   stopCycle = (by) => {
-    if (![CycleState.RUNNING, CycleState.HALTED, CycleState.WAITING].includes(this.state.cycle.state)) {
+    if (!STOPPABLE_STATES.includes(this.state.cycle.state)) {
       return { ok: false, reason: "The cell is not running." };
     }
     this.#emit("cycle/stop", { by });
@@ -87,6 +88,17 @@ export class MockCellGateway {
     const check = canResume(this.state);
     if (!check.ok) return check;
     this.#emit("cycle/resume", { by });
+    return { ok: true };
+  };
+
+  /** Operator completes the current operator step (e.g. presses Weld at "Ready to weld"). */
+  confirmStep = (by) => {
+    const { cycle } = this.state;
+    const step = PROCESS_STEPS[cycle.stepIndex];
+    if (cycle.state !== CycleState.AWAITING_OPERATOR || step?.id !== "ready") return { ok: false, reason: "Nothing to confirm now." };
+    if (!this.state.door.locked) return { ok: false, reason: "Lock the cell door first." };
+    if (!this.state.bin.inEnvelope) return { ok: false, reason: "Move the parts bin back to its marked spot." };
+    this.#emit("cycle/operatorConfirm", { by });
     return { ok: true };
   };
 
@@ -116,6 +128,10 @@ export class MockCellGateway {
     if (cycle.state !== CycleState.RUNNING) return;
 
     const step = PROCESS_STEPS[cycle.stepIndex];
+    if (step.operator) {
+      this.#emit("cycle/await");
+      return;
+    }
     const progress = Math.min(1, cycle.stepProgress + (TICK_MS / 1000 / this.stepSeconds[step.id]) * this.speed);
 
     if (step.id === "weld") {
@@ -133,7 +149,7 @@ export class MockCellGateway {
 
     if (progress < 1) {
       this.#emit("cycle/progress", { progress });
-    } else if (cycle.stepIndex < PROCESS_STEPS.length - 1) {
+    } else if (step.id !== "post_scan") {
       this.#emit("cycle/nextStep");
     } else {
       const verdict = this.nextVerdict;

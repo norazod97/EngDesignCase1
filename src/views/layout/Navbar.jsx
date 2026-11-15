@@ -1,27 +1,25 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useCell } from "../../controllers/CellController.jsx";
+import { useCellSummary } from "../../controllers/CellController.jsx";
 import { useNotifications } from "../../controllers/NotificationController.jsx";
 import { useSession } from "../../controllers/SessionController.jsx";
 import { useClock } from "../../controllers/useClock.js";
 import { getColleaguesOnShift } from "../../services/mesService.js";
 import { Avatar, IconButton } from "../components/primitives.jsx";
 import { StopCycleButton } from "../components/overlays.jsx";
-import { CycleState } from "../../models/cellModel.js";
 
 const dateFmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short" });
 const timeFmt = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit" });
 
 export function Navbar({ onToggleMenu, menuOpen, panel, onPanel, onStopRequest }) {
   const { operator } = useSession();
-  const { state } = useCell();
+  const { canStop } = useCellSummary();
   const { unread } = useNotifications();
   const now = useClock();
   const [colleagues, setColleagues] = useState([]);
 
   useEffect(() => { getColleaguesOnShift().then(setColleagues); }, []);
   const onShift = colleagues.filter((c) => c.online);
-  const canStop = [CycleState.RUNNING, CycleState.HALTED, CycleState.WAITING].includes(state.cycle.state);
 
   return (
     <header className="navbar">

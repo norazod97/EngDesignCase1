@@ -58,7 +58,7 @@ export function ToastStack({ toasts, onDismiss }) {
           <div className="toast-body">
             <strong>{t.title}</strong>
             {t.body && <p>{t.body}</p>}
-            {t.link && <Link to={t.link} onClick={() => onDismiss(t.id)}>{t.tone === "ai" ? "See why in the log" : "Open"}</Link>}
+            {t.link && <Link to={t.link} onClick={() => onDismiss(t.id)}>{t.linkText ?? (t.tone === "ai" ? "See why in the log" : "Open")}</Link>}
           </div>
           <IconButton icon="close" label="Dismiss" className="icon-btn-plain" onClick={() => onDismiss(t.id)} />
         </div>

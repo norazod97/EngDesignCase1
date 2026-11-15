@@ -123,6 +123,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .callout > .icon { margin-top: 2px; }
 .callout p { margin-top: 4px; }
 .callout .row { justify-content: flex-start; margin-top: 12px; }
+.callout-accent { border-color: var(--accent); background: var(--accent-tint); }
 .callout-positive { border-color: var(--lamp-positive); background: var(--tint-positive); }
 .callout-warning { border-color: var(--lamp-warning); background: var(--tint-warning); }
 .callout-error { border-color: var(--lamp-error); background: var(--tint-error); }
@@ -188,8 +189,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .tracker-state { padding: 2px 10px; border-radius: var(--radius); font-weight: 600; font-size: var(--fs-sm); background: var(--field); }
 .state-running { background: var(--tint-positive); color: var(--text-positive); }
 .state-halted { background: var(--lamp-error); color: #fff; }
+.state-awaiting_operator { background: var(--accent); color: var(--ink); }
 .state-waiting, .state-stopped { background: var(--tint-warning); color: var(--text-warning); }
-.tracker-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; list-style: none; margin: 0; padding: 0; }
+.tracker-steps { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; list-style: none; margin: 0; padding: 0; }
 .tracker-step { display: flex; align-items: center; gap: 8px; padding: 8px; border-top: 5px solid var(--line); font-size: var(--fs-sm); }
 .tracker-step.is-done { border-color: var(--lamp-positive); }
 .tracker-step.is-current { border-color: var(--accent); font-weight: 700; background: var(--accent-tint); }
@@ -197,6 +199,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .tracker-dot { display: grid; place-items: center; flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; background: var(--field); font: 600 var(--fs-xs) var(--font-mono); }
 .is-done .tracker-dot { background: var(--lamp-positive); color: #fff; }
 .is-current .tracker-dot { background: var(--accent); color: var(--ink); }
+.tracker:not(.tracker-compact) .tracker-step { flex-direction: column; justify-content: flex-start; gap: 4px; text-align: center; }
 .tracker-detail { display: grid; gap: 8px; }
 .tracker-compact { grid-template-columns: auto 1fr; align-items: center; gap: 16px; }
 .tracker-compact .tracker-label { color: #b5b5b5; }
@@ -408,7 +411,12 @@ button, input, textarea, select { font: inherit; color: inherit; }
   .shell-main { padding: 16px 16px 100px; }
   .span-2 { grid-column: auto; }
   .dash-grid { grid-template-columns: 1fr; }
-  .tracker-steps, .stepper { grid-template-columns: repeat(4, 1fr); }
+  .stepper { grid-template-columns: repeat(4, 1fr); }
+  .statusbar { flex-wrap: wrap; }
+  .statusbar-tracker { flex-basis: 100%; border-top: 1px solid #3a3a3a; }
+  .tracker-step { padding: 6px 2px; }
+  .tracker:not(.tracker-compact) .tracker-step:not(.is-current) .tracker-step-label { display: none; }
+  .tracker:not(.tracker-compact) .tracker-step.is-current { grid-column: span 3; }
   .tracker-step-label { font-size: var(--fs-xs); }
   .stepper li span { display: none; }
   .verdict { grid-template-columns: 1fr; }

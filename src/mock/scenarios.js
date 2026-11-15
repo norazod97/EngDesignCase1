@@ -45,7 +45,7 @@ export const ALARM_TEMPLATES = {
     background: "The penetration model predicts incomplete root fusion on the last 40 mm of the seam.",
     data: [{ label: "Predicted penetration", value: "68 %", limit: "≥ 90 %" }],
     assessment: { cause: "Travel speed too high for this plate thickness", confidence: 0.58 },
-    steps: ["Look at the seam during AI-SPECTO inspection.", "Note what you see in the comment box."],
+    steps: ["Look at the seam during the visual NDT.", "Note what you see in the comment box."],
     equipment: "R3",
   },
 };

@@ -4,7 +4,7 @@ import { Icon } from "../components/Icon.jsx";
 import { Modal } from "../components/overlays.jsx";
 import { AiBadge, Button, Confidence, Field, TextArea } from "../components/primitives.jsx";
 
-/** Operator confirms or overrides the AI-SPECTO verdict. The operator has the final say. */
+/** Visual NDT: the operator confirms or overrides the AI inspection. The operator has the final say. */
 export function InspectionModal({ item, onClose }) {
   const { actions } = useCell();
   const [verdict, setVerdict] = useState(null);
@@ -21,7 +21,7 @@ export function InspectionModal({ item, onClose }) {
   }
 
   return (
-    <Modal open size="lg" title={`Check assembly ${item.id}`} eyebrow="Quality check" onClose={onClose}
+    <Modal open size="lg" title={`Visual NDT · ${item.id}`} eyebrow="Your check" onClose={onClose}
       footer={<><Button variant="ghost" onClick={onClose}>Later</Button><Button variant="accent" size="lg" icon="check" disabled={!verdict || (disagrees && !comment.trim())} onClick={confirm}>Save my check</Button></>}>
       <div className="inspect">
         <figure className="scan-mock" aria-label="3D scan of the weld bead (simulated)">
@@ -37,7 +37,7 @@ export function InspectionModal({ item, onClose }) {
         <section className={`callout ${ai.aiVerdict === "ok" ? "callout-positive" : "callout-error"}`}>
           <Icon name={ai.aiVerdict === "ok" ? "check" : "alert"} />
           <div>
-            <strong>AI-SPECTO says: {ai.aiVerdict === "ok" ? "OK" : "NOT OK"} <AiBadge /></strong>
+            <strong>AI inspection says: {ai.aiVerdict === "ok" ? "OK" : "NOT OK"} <AiBadge /></strong>
             {ai.findings.map((f) => <p key={f.area}>{f.area}: {f.note} <Confidence value={f.confidence} /></p>)}
           </div>
         </section>

@@ -15,7 +15,7 @@ function toNotification(event, state) {
     case "bin/set":
       return p.inEnvelope ? null : { tone: "warning", title: "Parts bin out of reach", body: "Open the cell and push the bin back onto the marked spot.", sticky: true };
     case "cycle/jobScanned":
-      return { tone: "info", title: "Assembly ready to check", body: "AI-SPECTO finished scanning. Please look at the part and confirm.", link: "/dashboard#review" };
+      return { tone: "ai", title: "AI finished scanning", body: "Do the visual NDT: look at the weld and record the result.", link: "/dashboard", linkText: "Open the check" };
     case "cycle/halt":
       return p.alarm?.halts ? null : { tone: "warning", title: p.alarm.situation, body: "Open the alarm to see what to check.", link: "/dashboard" };
     case "job/docsAttached":

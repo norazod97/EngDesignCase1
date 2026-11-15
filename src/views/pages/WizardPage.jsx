@@ -66,7 +66,7 @@ export function WizardPage() {
             </select>
             <Button onClick={() => cmd("aiAdjust", { message: aiText })}>Send AI adjustment toast</Button>
             <div className="row">Auto AI toast during weld <Switch checked={!!sim?.autoAi} onChange={(on) => cmd("autoAi", { on })} /></div>
-            <div className="row">Next AI-SPECTO verdict
+            <div className="row">Next AI inspection result
               <Switch checked={sim?.nextVerdict === "ok"} onText="OK" offText="NOK" onChange={(on) => cmd("nextVerdict", { verdict: on ? "ok" : "nok" })} />
             </div>
           </div>

@@ -10,9 +10,15 @@ import { EquipmentWidget, HistorianWidget, LabelingWidget, StockWidget, Telemetr
 
 function CycleCard() {
   const { state, actions } = useCell();
-  const { cycle, active, total, finished } = useCellSummary();
+  const { cycle, active, total, finished, waitingFor, ndtItem } = useCellSummary();
   const { requestHelp } = useOutletContext();
   const [error, setError] = useState("");
+  const [ndtOpen, setNdtOpen] = useState(false);
+
+  function weld() {
+    const r = actions.confirmStep();
+    setError(r.ok ? "" : r.reason);
+  }
 
   function resume() {
     const r = actions.resume();
@@ -35,6 +41,35 @@ function CycleCard() {
         <span>Shift progress: <strong>{finished} of {total}</strong> assemblies</span>
         <ProgressBar value={total ? finished / total : 0} label="Shift progress" />
       </div>
+
+      {waitingFor === "ready" && (
+        <div className="callout callout-accent">
+          <Icon name="play" />
+          <div>
+            <strong>Ready to weld</strong>
+            <p>The dry run is done. Check the path, then press Weld.</p>
+            <div className="row">
+              {!state.door.locked && <Button variant="ink" icon="lock" onClick={() => actions.lockDoor(true)}>Lock door</Button>}
+              <Button variant="accent" size="lg" icon="play" onClick={weld}>Weld</Button>
+            </div>
+            {error && <p className="field-error" role="alert">{error}</p>}
+          </div>
+        </div>
+      )}
+
+      {waitingFor === "ndt" && ndtItem && (
+        <div className="callout callout-accent">
+          <Icon name="eye" />
+          <div>
+            <strong>Visual NDT</strong>
+            <p>The AI finished scanning. Look at the weld and record the result.</p>
+            <div className="row">
+              <Button variant="accent" size="lg" icon="eye" onClick={() => setNdtOpen(true)}>Check the weld</Button>
+            </div>
+          </div>
+          <InspectionModal item={ndtOpen ? ndtItem : null} onClose={() => setNdtOpen(false)} />
+        </div>
+      )}
 
       {cycle.state === CycleState.WAITING && cycle.blocker && (
         <div className="callout callout-warning">
@@ -73,27 +108,6 @@ function CycleCard() {
   );
 }
 
-function ReviewCard() {
-  const { awaitingReview } = useCellSummary();
-  const [item, setItem] = useState(null);
-  return (
-    <Card title="Parts to check" icon="eye" id="review" tone={awaitingReview.length ? "accent" : undefined}>
-      {awaitingReview.length === 0 ? <p className="empty">Finished parts that need your check will show up here.</p> : (
-        <ul className="review-list">
-          {awaitingReview.map((r) => (
-            <li key={r.id}>
-              <span className="mono">{r.id}</span>
-              <span className={`verdict-pill ${r.inspection.aiVerdict}`}>AI: {r.inspection.aiVerdict === "ok" ? "OK" : "NOT OK"}</span>
-              <Button variant="accent" size="sm" onClick={() => setItem(r)}>Check part</Button>
-            </li>
-          ))}
-        </ul>
-      )}
-      <InspectionModal item={item} onClose={() => setItem(null)} />
-    </Card>
-  );
-}
-
 export function DashboardPage() {
   useEffect(() => { document.title = "Cell dashboard · COROB Weld Cell"; }, []);
   return (
@@ -101,7 +115,6 @@ export function DashboardPage() {
       <h1 className="page-title">Cell dashboard</h1>
       <div className="dash-grid">
         <CycleCard />
-        <ReviewCard />
         <EquipmentWidget />
         <TelemetryWidget />
         <StockWidget />

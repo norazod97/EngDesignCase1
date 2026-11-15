@@ -11,6 +11,11 @@ export function StatusBar() {
 
   return (
     <div className="statusbar" role="region" aria-label="Shift status">
+      {/* Shift time slot, e.g. 14:00–22:00. */}
+      <div className="statusbar-item">
+        <span className="statusbar-label">Shift</span>
+        <strong>{shift?.start ? `${shift.start}–${shift.end}` : "—"}</strong>
+      </div>
       <div className="statusbar-item">
         <span className="statusbar-label">Cell</span>
         <strong>{cellName ?? (shift ? `Cell ${shift.cellId}` : "—")}</strong>

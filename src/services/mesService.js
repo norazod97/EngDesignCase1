@@ -4,6 +4,7 @@
 
 import { COLLEAGUES, JOBS, OPERATORS, SHIFTS, STOCK } from "../mock/fixtures.js";
 import STUDY_DESIGN from "../data/study/study-design.json";
+import ROSTER from "../data/people/colleagues.json";
 
 const delay = (ms = 150) => new Promise((r) => setTimeout(r, ms));
 const clone = (x) => structuredClone(x);
@@ -36,10 +37,26 @@ export async function getShiftAssignment(operatorId) {
   return { shift: clone(shift), jobs: clone(jobs) };
 }
 
+/**
+ * Colleagues on the shop floor, from the study roster (src/data/people/colleagues.json).
+ * Out: [{ id, name, role, status, online, location, expertise, photo }].
+ * photo is a picture in public/avatars (stock photo or drawn picture).
+ */
 export async function getColleaguesOnShift() {
   await delay(50);
-  return clone(COLLEAGUES);
+  return ROSTER.colleagues.map((c) => ({
+    id: c.id,
+    name: c.first_name,
+    role: c.role_label,
+    status: c.default_status, // "available" | "busy"
+    online: c.default_status !== "offline",
+    location: c.location,
+    expertise: c.expertise,
+    // Photo from the roster if there is one, otherwise the drawn picture.
+    photo: `${import.meta.env.BASE_URL}${c.photo ?? `avatars/${c.id}.svg`}`,
+  }));
 }
+// parked: COLLEAGUES in mock/fixtures.js (old demo names) is no longer used.
 
 export async function getStock() {
   await delay(50);

@@ -118,12 +118,18 @@ export function Card({ title, icon, actions, children, className = "", id, tone 
   );
 }
 
-export function Avatar({ name, size = 40, online }) {
+/**
+ * Round avatar: a picture if `photo` is given, otherwise the initials.
+ * status "available" -> green dot, "busy" -> red dot. (online is the older on/off dot.)
+ */
+const STATUS_WORD = { available: "available", busy: "busy" };
+export function Avatar({ name, size = 40, online, photo, status }) {
   const initials = name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
   return (
     <span className="avatar" style={{ width: size, height: size, fontSize: size * 0.38 }} title={name}>
-      {initials}
-      {online !== undefined && <span className={`avatar-dot ${online ? "is-online" : ""}`} aria-label={online ? "on shift" : "away"} />}
+      {photo ? <img className="avatar-img" src={photo} alt="" /> : initials}
+      {status ? <span className={`avatar-dot is-${status}`} aria-label={STATUS_WORD[status] ?? status} />
+        : online !== undefined && <span className={`avatar-dot ${online ? "is-online" : ""}`} aria-label={online ? "on shift" : "away"} />}
     </span>
   );
 }

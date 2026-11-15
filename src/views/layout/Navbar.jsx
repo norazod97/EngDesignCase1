@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
 import { useCellSummary } from "../../controllers/CellController.jsx";
 import { useNotifications } from "../../controllers/NotificationController.jsx";
 import { useSession } from "../../controllers/SessionController.jsx";
 import { useClock } from "../../controllers/useClock.js";
-import { getColleaguesOnShift } from "../../services/mesService.js";
+import { useColleaguesOnShift } from "../../controllers/useColleagues.js";
 import { Avatar, IconButton } from "../components/primitives.jsx";
 import { StopCycleButton } from "../components/overlays.jsx";
 
@@ -15,10 +14,8 @@ export function Navbar({ onToggleMenu, menuOpen, panel, onPanel, onStopRequest }
   const { canStop } = useCellSummary();
   const { unread } = useNotifications();
   const now = useClock();
-  const [colleagues, setColleagues] = useState([]);
-
-  useEffect(() => { getColleaguesOnShift().then(setColleagues); }, []);
-  const onShift = colleagues.filter((c) => c.online);
+  // Colleagues on the shop floor (from the controller, not from a service).
+  const onShift = useColleaguesOnShift().filter((c) => c.online);
 
   return (
     <header className="navbar">
@@ -32,16 +29,26 @@ export function Navbar({ onToggleMenu, menuOpen, panel, onPanel, onStopRequest }
             <small>{operator.badge}</small>
           </span>
         </div>
-      </div>
-
-      <div className="navbar-center">
-        <div className="navbar-team" aria-label={`${onShift.length} colleagues on shift`}>
-          {onShift.slice(0, 4).map((c) => <Avatar key={c.id} name={c.name} size={32} online />)}
-        </div>
-        <time className="navbar-clock" dateTime={now.toISOString()}>
+        {/* Current time and date, on the left next to the operator. */}
+        <time className="navbar-clock navbar-clock-left" dateTime={now.toISOString()}>
           <strong>{timeFmt.format(now)}</strong>
           <small>{dateFmt.format(now)}</small>
         </time>
+      </div>
+
+      <div className="navbar-center">
+        {/* Colleagues as "stories": round picture with the first name under it.
+            Green dot = available, red dot = busy. Tap opens the Messages panel. */}
+        <ul className="navbar-stories" aria-label={`${onShift.length} colleagues on the shop floor`}>
+          {onShift.map((c) => (
+            <li key={c.id}>
+              <button type="button" className={`story is-${c.status}`} onClick={() => onPanel("messages")} title={`${c.name} · ${c.role} · ${c.status}`}>
+                <span className="story-ring"><Avatar name={c.name} photo={c.photo} status={c.status} size={44} /></span>
+                <span className="story-name">{c.name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
 
       <div className="navbar-right">

@@ -24,7 +24,7 @@ export function AssistantDock({ open, onToggle }) {
   if (!open) {
     return (
       <button type="button" className="assistant-tab" onClick={onToggle} aria-expanded="false">
-        <Icon name="sparkle" /> <span>Ask the assistant</span>
+        <Icon name="sparkle" /> <span>Ask AI</span>
       </button>
     );
   }

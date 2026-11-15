@@ -34,6 +34,8 @@ const PATHS = {
   note: "M5 3h14v18H5zM9 8h6M9 12h6M9 16h3",
   wand: "M4 20 16 8M14 4v2M18 8h2M18 4l-1.5 1.5M20 12l-1.5-1.5",
   clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2",
+  plug: "M9 3v5M15 3v5M7 8h10v4a5 5 0 0 1-10 0zM12 17v4",
+  plugOff: "M9 3v5M15 3v5M7 8h10v4a5 5 0 0 1-10 0zM12 17v4M3 3l18 18",
 };
 
 export function Icon({ name, size = 22, label, className = "", strokeWidth = 1.8 }) {

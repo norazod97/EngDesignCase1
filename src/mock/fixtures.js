@@ -33,30 +33,31 @@ export const COLLEAGUES = [
 
 // Which cell each account works in. cellId points into CELLS below.
 export const SHIFTS = {
-  operator1: { id: "S-GMAW", label: "Study session", start: "", end: "", cellId: "54", area: "51.2", process: "GMAW" },
-  operator2: { id: "S-WAAM", label: "Study session", start: "", end: "", cellId: "W1", area: "51.3", process: "WAAM" },
+  operator1: { id: "S-GMAW", label: "Afternoon shift", start: "14:00", end: "22:00", cellId: "52", area: "51.2", process: "GMAW" },
+  operator2: { id: "S-WAAM", label: "Afternoon shift", start: "14:00", end: "22:00", cellId: "21", area: "51.3", process: "WAAM" },
 };
 
 // The simulated cells. "process" decides which steps the cell goes through (models/cellModel.js).
 export const CELLS = {
-  54: {
-    id: "54",
+  52: {
+    id: "52",
     area: "51.2",
-    name: "Jigless GMAW cell",
+    name: "Jigless GMAW #52",
     process: "GMAW",
     equipment: [
       { id: "R1", name: "Handling robot 1", kind: "robot", model: "ABB IRB 4600", status: "idle", nextServiceDue: "2026-12-02" },
       { id: "R2", name: "Handling robot 2", kind: "robot", model: "ABB IRB 6700", status: "idle", nextServiceDue: "2026-12-02" },
-      { id: "R3", name: "Welding robot", kind: "robot", model: "Doosan H2017 + GMAW torch", status: "idle", nextServiceDue: "2026-11-16" },
-      { id: "PS", name: "Welding power source", kind: "equipment", model: "GMAW power source", status: "idle", nextServiceDue: null },
+      { id: "R3", name: "Welding robot", kind: "robot", model: "Doosan H2017", status: "idle", nextServiceDue: "2026-11-16" },
+      // dutyCycle: picture of the machine's duty cycle chart (public/equipment), shown from the Robots & sensors card.
+      { id: "PS", name: "Welding power source", kind: "equipment", model: "Fronius TPS 400i", status: "idle", nextServiceDue: null, dutyCycle: { image: "equipment/fronius-tps400i-duty-cycle.svg", points: [{ duty: 40, current: 400 }, { duty: 60, current: 360 }, { duty: 100, current: 320 }] } },
       { id: "PF", name: "Profilometer camera", kind: "sensor", model: "Laser line profilometer", status: "idle", nextServiceDue: null },
-      { id: "AS", name: "AI inspection camera", kind: "sensor", model: "Industrial camera", status: "idle", nextServiceDue: null },
+      { id: "AS", name: "3D scanner", kind: "sensor", model: "Laser 3D scanner (AI inspection)", status: "idle", nextServiceDue: null },
     ],
   },
-  W1: {
-    id: "W1",
+  21: {
+    id: "21",
     area: "51.3",
-    name: "WAAM repair cell",
+    name: "WAAM repair cell #21",
     process: "WAAM",
     equipment: [
       { id: "R1", name: "Deposition robot", kind: "robot", model: "6-axis robot + WAAM torch", status: "idle", nextServiceDue: null },
@@ -72,16 +73,18 @@ const engineer = { name: "Ir. Sofia Bianchi", email: "s.bianchi@example.com", ph
 // The study assemblies: 4 per cell, with neutral names.
 // The list never says which assembly has an anomaly: that is decided by the
 // study schedule and the wizard (docs/PLAN.md section 1).
-const docs = (n) => ({ cad: { file: `${n}.step` }, wps: { file: `WPS-${n}.pdf`, hasNote: false } });
+// Each assembly has its CAD drawing (.step) and its welding procedure (WPS, PDF),
+// both named after the weld ID (e.g. WPS-W-52-1101-rev1.pdf).
+const docs = (n) => ({ cad: { file: `${n}.step` }, wps: { file: `WPS-${n}-rev1.pdf`, hasNote: false } });
 export const JOBS = [
-  { id: "GMAW-A1", name: "Assembly 1 · Bracket", weldNo: "#1", tags: { geometry: "Plate-to-plate", material: "S355 steel", bevel: "V" }, ...docs("GMAW-A1"), commissioner: engineer, cellId: "54" },
-  { id: "GMAW-A2", name: "Assembly 2 · Flange", weldNo: "#2", tags: { geometry: "Tube-to-plate", material: "S355 steel", bevel: "V" }, ...docs("GMAW-A2"), commissioner: engineer, cellId: "54" },
-  { id: "GMAW-A3", name: "Assembly 3 · Frame corner", weldNo: "#3", tags: { geometry: "T-joint", material: "S355 steel", bevel: "none" }, ...docs("GMAW-A3"), commissioner: engineer, cellId: "54" },
-  { id: "GMAW-A4", name: "Assembly 4 · Gusset", weldNo: "#4", tags: { geometry: "Plate-to-plate", material: "S355 steel", bevel: "V" }, ...docs("GMAW-A4"), commissioner: engineer, cellId: "54" },
-  { id: "WAAM-A1", name: "Assembly 1 · Shaft", weldNo: "#1", tags: { geometry: "Worn shaft", material: "Low-alloy steel", bevel: "-" }, ...docs("WAAM-A1"), commissioner: engineer, cellId: "W1" },
-  { id: "WAAM-A2", name: "Assembly 2 · Mould insert", weldNo: "#2", tags: { geometry: "Chipped edge", material: "Tool steel", bevel: "-" }, ...docs("WAAM-A2"), commissioner: engineer, cellId: "W1" },
-  { id: "WAAM-A3", name: "Assembly 3 · Pump impeller", weldNo: "#3", tags: { geometry: "Eroded blade", material: "Stainless steel", bevel: "-" }, ...docs("WAAM-A3"), commissioner: engineer, cellId: "W1" },
-  { id: "WAAM-A4", name: "Assembly 4 · Flange", weldNo: "#4", tags: { geometry: "Worn face", material: "S355 steel", bevel: "-" }, ...docs("WAAM-A4"), commissioner: engineer, cellId: "W1" },
+  { id: "GMAW-A1", name: "Bracket", weldNo: "W-52-1101", tags: { geometry: "Plate-to-plate", material: "S355 steel", bevel: "V" }, ...docs("W-52-1101"), commissioner: engineer, cellId: "52" },
+  { id: "GMAW-A2", name: "Flange", weldNo: "W-52-1102", tags: { geometry: "Tube-to-plate", material: "S355 steel", bevel: "V" }, ...docs("W-52-1102"), commissioner: engineer, cellId: "52" },
+  { id: "GMAW-A3", name: "Frame corner", weldNo: "W-52-1103", tags: { geometry: "T-joint", material: "S355 steel", bevel: "none" }, ...docs("W-52-1103"), commissioner: engineer, cellId: "52" },
+  { id: "GMAW-A4", name: "Gusset", weldNo: "W-52-1104", tags: { geometry: "Plate-to-plate", material: "S355 steel", bevel: "V" }, ...docs("W-52-1104"), commissioner: engineer, cellId: "52" },
+  { id: "WAAM-A1", name: "Shaft", weldNo: "R-21-2201", tags: { geometry: "Worn shaft", material: "Low-alloy steel", bevel: "-" }, ...docs("R-21-2201"), commissioner: engineer, cellId: "21" },
+  { id: "WAAM-A2", name: "Mould insert", weldNo: "R-21-2202", tags: { geometry: "Chipped edge", material: "Tool steel", bevel: "-" }, ...docs("R-21-2202"), commissioner: engineer, cellId: "21" },
+  { id: "WAAM-A3", name: "Pump impeller", weldNo: "R-21-2203", tags: { geometry: "Eroded blade", material: "Stainless steel", bevel: "-" }, ...docs("R-21-2203"), commissioner: engineer, cellId: "21" },
+  { id: "WAAM-A4", name: "Flange", weldNo: "R-21-2204", tags: { geometry: "Worn face", material: "S355 steel", bevel: "-" }, ...docs("R-21-2204"), commissioner: engineer, cellId: "21" },
 ];
 
 export const STOCK = [

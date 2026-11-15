@@ -9,41 +9,72 @@ import { CycleState } from "../../models/cellModel.js";
 import { Icon } from "../components/Icon.jsx";
 import { Button, Card, Tag } from "../components/primitives.jsx";
 import { InspectionModal } from "../modals/InspectionModal.jsx";
+import { WpsModal } from "../modals/WpsModal.jsx";
 import { PrepareCellModal } from "../modals/PrepareCellModal.jsx";
 import { ProcessTracker } from "../widgets/ProcessTracker.jsx";
-import { EquipmentWidget, TelemetryWidget } from "../widgets/Widgets.jsx";
-// parked for the study (PLAN T1): StockWidget, HistorianWidget, LabelingWidget.
+import { EquipmentWidget } from "../widgets/Widgets.jsx";
+// parked for the study (PLAN T1): StockWidget, HistorianWidget, LabelingWidget, TelemetryWidget (weld signals).
 
 // Colour of the status tag in the assembly list.
 const STATUS_TONE = { todo: "neutral", active: "info", done: "positive" };
 
-/** The list of assemblies for this cell. Only the next one has a Start button. */
-function AssemblyList({ onStart }) {
+/**
+ * The table of assemblies for this cell: weld ID, CAD drawing, WPS and status.
+ * Only the next assembly has a Start button. The table never shows which
+ * assembly has an anomaly (study rule).
+ */
+function AssemblyList({ onStart, onOpenWps }) {
   const assemblies = useAssemblies();
   const { process, cellName } = useCellSummary();
   return (
-    <Card title={`Your assemblies · ${cellName ?? process}`} icon="box" className="span-2">
-      <ol className="assembly-list">
-        {assemblies.map((a) => (
-          <li key={a.id} className={`assembly is-${a.status} ${a.isNext ? "is-next" : ""}`}>
-            {/* Number circle: a tick when done. */}
-            <span className="assembly-dot" aria-hidden="true">
-              {a.status === "done" ? <Icon name="check" size={18} strokeWidth={3} /> : a.weldNo.replace("#", "")}
-            </span>
-            <span className="assembly-name">
-              <strong>{a.name}</strong>
-              <small>{a.tags.geometry} · {a.tags.material}</small>
-            </span>
-            <Tag tone={STATUS_TONE[a.status]}>{a.statusText}</Tag>
-            {/* Start button only on the next assembly, and only when the cell is free. */}
-            {a.isNext && (
-              <Button variant="accent" size="lg" icon="play" disabled={!a.canStart} onClick={() => onStart(a)}>
-                Start
-              </Button>
-            )}
-          </li>
-        ))}
-      </ol>
+    <Card title={`Your assemblies · ${cellName ?? process}`} icon="box" className="span-2 assembly-card">
+      <div className="table-wrap">
+        <table className="job-table assembly-table">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Assembly</th>
+              <th scope="col">Weld ID</th>
+              <th scope="col">CAD</th>
+              <th scope="col">WPS</th>
+              <th scope="col">Status</th>
+              <th scope="col"><span className="sr-only">Action</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {assemblies.map((a, i) => (
+              <tr key={a.id} className={`is-${a.status} ${a.isNext ? "is-next" : ""}`}>
+                {/* Number circle: a tick when done. */}
+                <td data-label="#">
+                  <span className="assembly-dot" aria-hidden="true">
+                    {a.status === "done" ? <Icon name="check" size={18} strokeWidth={3} /> : i + 1}
+                  </span>
+                </td>
+                <td data-label="Assembly">
+                  <strong className="assembly-title">{a.name}</strong>
+                  <small className="muted assembly-sub">{a.tags.geometry} · {a.tags.material}</small>
+                </td>
+                <td data-label="Weld ID"><span className="mono">{a.weldNo}</span></td>
+                {/* CAD drawing of the part (.STEP). */}
+                <td data-label="CAD">
+                  {a.cad ? <span className="doc"><Icon name="file" size={18} /> .STEP</span> : <Tag tone="error" icon="alert">Missing</Tag>}
+                </td>
+                {/* Welding procedure: opens the PDF viewer. */}
+                <td data-label="WPS">
+                  {a.wps ? <Button variant="ghost" size="sm" icon="file" onClick={() => onOpenWps(a)}>Open PDF</Button> : <Tag tone="error" icon="alert">Missing</Tag>}
+                </td>
+                <td data-label="Status"><Tag tone={STATUS_TONE[a.status]}>{a.statusText}</Tag></td>
+                {/* Start button only on the next assembly, and only when the cell is free. */}
+                <td data-label="">
+                  {a.isNext && (
+                    <Button variant="accent" size="lg" icon="play" disabled={!a.canStart} onClick={() => onStart(a)}>Start</Button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {assemblies.every((a) => a.status === "done") && (
         <div className="callout callout-positive"><Icon name="check" /><div><strong>All assemblies are done.</strong><p>Thank you! Please tell the researcher.</p></div></div>
       )}
@@ -134,6 +165,7 @@ function CycleCard() {
 
 export function DashboardPage() {
   const [starting, setStarting] = useState(null); // the assembly being prepared, or null
+  const [wpsJob, setWpsJob] = useState(null); // the assembly whose WPS is open, or null
 
   useEffect(() => { document.title = "Cell dashboard · COROB Weld Cell"; }, []);
 
@@ -141,11 +173,11 @@ export function DashboardPage() {
     <div className="page">
       <h1 className="page-title">Cell dashboard</h1>
       <div className="dash-grid">
-        <AssemblyList onStart={setStarting} />
+        <AssemblyList onStart={setStarting} onOpenWps={setWpsJob} />
         <CycleCard />
         <EquipmentWidget />
-        <TelemetryWidget />
       </div>
+      <WpsModal job={wpsJob} onClose={() => setWpsJob(null)} />
       {/* Guided start: checklist -> load parts -> lock cell -> start (one assembly at a time). */}
       <PrepareCellModal open={!!starting} jobs={starting ? [starting] : []} onClose={() => setStarting(null)} onStarted={() => setStarting(null)} />
     </div>

@@ -4,37 +4,69 @@
   "colleagues": [
     {
       "id": "col-henk",
+      "photo": "avatars/col-henk.jpg",
       "first_name": "Henk",
       "initials": "HV",
-      "role": "senior_welder",
-      "role_label": "Senior welder",
-      "languages": ["nl", "de", "en"],
-      "expertise": ["welding_process"],
-      "skills": ["GMAW", "WAAM", "visual inspection"],
-      "location": "GMAW cell",
+      "role": "maintenance",
+      "role_label": "Maintenance technician",
+      "languages": [
+        "nl",
+        "de",
+        "en"
+      ],
+      "expertise": [
+        "robot_programming"
+      ],
+      "skills": [
+        "robots",
+        "repairs",
+        "robot programs"
+      ],
+      "location": "on call",
       "default_status": "available"
     },
     {
       "id": "col-marta",
+      "photo": "avatars/col-marta.jpg",
       "first_name": "Marta",
       "initials": "MK",
-      "role": "robot_programmer",
-      "role_label": "Robot programmer",
-      "languages": ["pl", "en"],
-      "expertise": ["robot_programming"],
-      "skills": ["robot programs", "dry runs", "paths"],
-      "location": "WAAM cell",
-      "default_status": "available"
+      "role": "senior_welder",
+      "role_label": "Senior welder",
+      "languages": [
+        "pl",
+        "en"
+      ],
+      "expertise": [
+        "welding_process"
+      ],
+      "skills": [
+        "GMAW",
+        "WAAM",
+        "visual inspection"
+      ],
+      "location": "WAAM cell #21",
+      "default_status": "busy"
     },
     {
       "id": "col-yusuf",
+      "photo": "avatars/col-yusuf.jpg",
       "first_name": "Yusuf",
       "initials": "YA",
       "role": "quality_engineer",
       "role_label": "Quality and AI engineer",
-      "languages": ["tr", "nl", "en"],
-      "expertise": ["ml_defect_detection"],
-      "skills": ["AI checks", "NDT", "scans"],
+      "languages": [
+        "tr",
+        "nl",
+        "en"
+      ],
+      "expertise": [
+        "ml_defect_detection"
+      ],
+      "skills": [
+        "AI checks",
+        "NDT",
+        "scans"
+      ],
       "location": "office",
       "default_status": "available"
     },
@@ -42,11 +74,19 @@
       "id": "col-sanne",
       "first_name": "Sanne",
       "initials": "SB",
-      "role": "team_lead",
-      "role_label": "Team lead",
-      "languages": ["nl", "en"],
-      "expertise": ["team_lead"],
-      "skills": ["planning", "safety"],
+      "role": "supervisor",
+      "role_label": "Supervisor",
+      "languages": [
+        "nl",
+        "en"
+      ],
+      "expertise": [
+        "team_lead"
+      ],
+      "skills": [
+        "planning",
+        "safety"
+      ],
       "location": "shop floor",
       "default_status": "busy"
     }

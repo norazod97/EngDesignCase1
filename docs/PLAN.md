@@ -11,12 +11,12 @@ Each participant does 8 assemblies (4 GMAW, 4 WAAM): no anomaly, welding-process
 **Login = cell** (demo accounts, client-side only):
 | Login | Cell | Dashboard after login |
 |---|---|---|
-| `operator1` / `weld123` | Jigless **GMAW** cell (54) | 4 GMAW assemblies |
+| `operator1` / `weld123` | Jigless **GMAW** cell (#52) | 4 GMAW assemblies |
 | `operator2` / `weld456` | **WAAM** repair cell | 4 WAAM assemblies |
 
 **Assembly list (dashboard, right after login)**
 - 4 assemblies per cell, from `src/data/study/study-design.json` (`assemblies_per_process`): 1 without anomaly, 3 with one anomaly each (welding process, robot programming, ML defect detection).
-- The list shows **neutral names only**, e.g. "Assembly 1 · Bracket", with status To do / In progress / Done. It **never** says which assembly has an anomaly or what kind. Same look for all 4.
+- The list shows **neutral names only**, e.g. "Bracket" (the number is in the # column), with status To do / In progress / Done. It **never** says which assembly has an anomaly or what kind. Same look for all 4.
 - Only the next assembly can be started. Done assemblies stay in the list with a tick.
 - Which assembly gets which anomaly (and which variant) is decided by the study schedule and the wizard, not shown in the UI.
 
@@ -80,7 +80,7 @@ Paste a task into a **new chat** in Claude in VS Code. Each task starts with:
 |---|---|---|
 | T0 | **Comment the existing code** for a beginner (CLAUDE.md rules). Comments only, no code changes. One folder per chat: `models/`, then `services/`, then `controllers/`, then `views/`. | the folder of that chat |
 | T1 | **Park unused pages.** Hide Historian, Labeling, Account and Shift from the menu and routes; after login go straight to the dashboard. Hide the stock card and AI-adjustment toasts. Don't delete the code: leave a `// parked` comment. | `src/App.jsx`, `src/views/layout/SideMenu.jsx`, `src/views/pages/LoginPage.jsx`, `src/views/pages/DashboardPage.jsx` |
-| T1b | **Login = cell, assembly list** (section 1). Accounts `operator1`/`weld123` → GMAW cell 54, `operator2`/`weld456` → WAAM cell (add the WAAM cell to `CELLS`, with placeholder steps until T14). Remove `jack`. The dashboard shows the 4 assemblies of that cell from `study-design.json`, with neutral names and To do / In progress / Done; only the next one can start. Load the study design through a service, not in the view. Update the README demo accounts. | `src/mock/fixtures.js`, `src/services/mesService.js`, `src/views/pages/DashboardPage.jsx`, `src/data/study/study-design.json` |
+| T1b | **Login = cell, assembly list** (section 1). Accounts `operator1`/`weld123` → GMAW cell 52, `operator2`/`weld456` → WAAM cell (add the WAAM cell to `CELLS`, with placeholder steps until T14). Remove `jack`. The dashboard shows the 4 assemblies of that cell from `study-design.json`, with neutral names and To do / In progress / Done; only the next one can start. Load the study design through a service, not in the view. Update the README demo accounts. | `src/mock/fixtures.js`, `src/services/mesService.js`, `src/views/pages/DashboardPage.jsx`, `src/data/study/study-design.json` |
 | T2 | **Three cycle states.** idle / running / halted (today there are 7). complete → idle with `lastResult: "complete"`. stopped → halted, `reason: "operator_stop"`. waiting → halted, `reason: "missing_docs"`. awaiting_operator → running with `note: "your_turn"` ("Your turn: press Weld" / "Your turn: check the weld"); this is normal work, not a problem. Show the reason or note as one short line next to the lamp. Keep the 7 GMAW steps (load … ndt) and `STOPPABLE_STATES`. Start only from idle; resume only from halted when the cause is cleared. | `src/models/cellModel.js`, then each file that uses `CycleState` |
 | T2b | **Style check.** Compare our primitives with `docs/STYLE.md`. Make main buttons 64 px and status text 24 px. Add a display-only `SafetyIndicator` (e-stop, light curtain, scanner) and show it in the status bar. | `docs/STYLE.md`, `src/views/components/primitives.jsx`, `src/views/theme/tokens.css`, `src/views/layout/StatusBar.jsx` |
 | T3 | **Navbar fix.** Move `getColleaguesOnShift` out of `Navbar.jsx` into a controller hook. | `src/views/layout/Navbar.jsx`, `src/controllers/` |

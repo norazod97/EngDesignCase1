@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCell } from "../../controllers/CellController.jsx";
 import { useNotifications } from "../../controllers/NotificationController.jsx";
-import { daysUntil, serviceDue } from "../../models/equipment.js";
+import { daysUntil, EquipmentStatus, serviceDue } from "../../models/equipment.js";
 import { CATEGORY_LABEL } from "../../models/historian.js";
 import { formatTime } from "../../models/job.js";
 import { getStock } from "../../services/mesService.js";
@@ -10,19 +10,32 @@ import { Modal } from "../components/overlays.jsx";
 import { AiBadge, Button, Card, Field, Input, StatusLamp, Tag } from "../components/primitives.jsx";
 import { Icon } from "../components/Icon.jsx";
 
+/** Robots and sensors of the cell, each with a status lamp. */
 export function EquipmentWidget() {
   const { state } = useCell();
   const due = serviceDue(state.equipment);
+  const [dutyFor, setDutyFor] = useState(null); // the machine whose duty cycle chart is open, or null
   return (
     <Card title="Robots & sensors" icon="robot">
       <ul className="equip-list">
         {state.equipment.map((e) => (
           <li key={e.id}>
-            <span><strong>{e.name}</strong><small>{e.model}</small></span>
-            <StatusLamp status={e.status} />
+            <span>
+              <strong>{e.name}</strong><small>{e.model}</small>
+              {/* Machines with a duty cycle chart (e.g. the power source) get a button to see it. */}
+              {e.dutyCycle && (
+                <Button variant="ghost" size="sm" icon="eye" className="equip-duty-btn" onClick={() => setDutyFor(e)}>Duty cycle</Button>
+              )}
+            </span>
+            <span className="equip-status">
+              {/* Plug: is the machine connected to the system? Icon + short word, never colour alone. */}
+              <ConnectionBadge connected={e.status !== EquipmentStatus.DISCONNECTED} />
+              <StatusLamp status={e.status} />
+            </span>
           </li>
         ))}
       </ul>
+      <DutyCycleModal machine={dutyFor} onClose={() => setDutyFor(null)} />
       {due.map((e) => (
         <div key={e.id} className="callout callout-warning">
           <Icon name="wrench" />
@@ -30,6 +43,41 @@ export function EquipmentWidget() {
         </div>
       ))}
     </Card>
+  );
+}
+
+/** Connection badge: green plug + "OK", or red crossed plug + "NOK". */
+function ConnectionBadge({ connected }) {
+  return (
+    <span className={`conn ${connected ? "is-ok" : "is-nok"}`} title={connected ? "Connection OK" : "No connection"}>
+      <Icon name={connected ? "plug" : "plugOff"} size={20} />
+      <span>{connected ? "OK" : "NOK"}</span>
+    </span>
+  );
+}
+
+/**
+ * Duty cycle window: the chart picture plus the rated points in plain words.
+ * Duty cycle = how many minutes out of 10 the machine can weld at a current
+ * before it must cool down (e.g. 40 % at 400 A = 4 min welding, 6 min rest).
+ */
+function DutyCycleModal({ machine, onClose }) {
+  if (!machine) return null;
+  const dc = machine.dutyCycle;
+  return (
+    <Modal open size="lg" title={`Duty cycle · ${machine.model}`} eyebrow={machine.name} onClose={onClose}
+      footer={<Button variant="accent" onClick={onClose}>Close</Button>}>
+      <div className="stack">
+        <img className="duty-chart" src={`${import.meta.env.BASE_URL}${dc.image}`} alt={`Duty cycle chart of the ${machine.model}`} />
+        <p className="lead">How long the machine can weld in 10 minutes, at each current.</p>
+        <ul className="duty-points">
+          {dc.points.map((p) => (
+            <li key={p.duty}><strong>{p.current} A</strong> · {p.duty} % · {Math.round(p.duty / 10)} min welding, {10 - Math.round(p.duty / 10)} min rest</li>
+          ))}
+        </ul>
+        <p><Tag>Simulation</Tag> <span className="muted">Values for 40 °C room temperature. Check the rating plate of the real machine.</span></p>
+      </div>
+    </Modal>
   );
 }
 

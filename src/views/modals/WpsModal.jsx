@@ -6,11 +6,8 @@ import { Button, Tag } from "../components/primitives.jsx";
 export function WpsModal({ job, onClose }) {
   if (!job) return null;
   return (
-    <Modal open title={job.wps.file} eyebrow={`Welding procedure · ${job.id}`} onClose={onClose}
-      footer={<>
-        <Button variant="ghost" icon="download" disabled title="No real file in the simulation">Download PDF</Button>
-        <Button variant="accent" onClick={onClose}>Close</Button>
-      </>}>
+    <Modal open title={job.wps.file} eyebrow={`Welding procedure · ${job.name ?? job.id}`} onClose={onClose}
+      footer={<Button variant="accent" onClick={onClose}>Close</Button>}>
       {job.wps.hasNote && (
         <div className="callout callout-warning">
           <Icon name="note" /> <div><strong>Note from the welding engineer</strong><p>{job.wps.note}</p></div>

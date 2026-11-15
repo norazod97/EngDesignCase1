@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useNotifications } from "../../controllers/NotificationController.jsx";
-import { getColleaguesOnShift } from "../../services/mesService.js";
+import { useColleaguesOnShift } from "../../controllers/useColleagues.js";
 import { formatTime } from "../../models/job.js";
 import { Icon } from "../components/Icon.jsx";
 import { Modal } from "../components/overlays.jsx";
@@ -40,16 +40,15 @@ export function NotificationsPanel({ onClose }) {
 }
 
 export function MessagesPanel({ onClose }) {
-  const [people, setPeople] = useState([]);
-  useEffect(() => { getColleaguesOnShift().then(setPeople); }, []);
+  const people = useColleaguesOnShift();
   return (
     <Drawer title="Messages" onClose={onClose}>
       <p className="muted">Chat with colleagues on this shift. (Conversation threads come in the next iteration.)</p>
       <ul className="people-list">
         {people.map((p) => (
           <li key={p.id}>
-            <Avatar name={p.name} size={40} online={p.online} />
-            <span><strong>{p.name}</strong><small>{p.role}{p.online ? " · on shift" : " · away"}</small></span>
+            <Avatar name={p.name} photo={p.photo} size={48} status={p.status} />
+            <span><strong>{p.name}</strong><small>{p.role} · {p.status === "available" ? "available" : "busy"} · {p.location}</small></span>
             <IconButton icon="chat" label={`Message ${p.name}`} disabled={!p.online} />
           </li>
         ))}

@@ -58,7 +58,7 @@ export function useCellSummary() {
     const steps = state.steps; // the steps of this cell's process (GMAW or WAAM)
     const step = steps[cycle.stepIndex];
     const overall = cycle.currentJobId ? (cycle.stepIndex + cycle.stepProgress) / steps.length : 0;
-    // Neutral name of the assembly in the cell (e.g. "Assembly 2 · Flange"), never its job id.
+    // Neutral name of the assembly in the cell (e.g. "Flange"), never its job id.
     const jobName = cycle.currentJobId ? state.jobs[cycle.currentJobId]?.name ?? cycle.currentJobId : null;
     const active = [...STOPPABLE_STATES, CycleState.STOPPED].includes(cycle.state);
     const canStop = STOPPABLE_STATES.includes(cycle.state);

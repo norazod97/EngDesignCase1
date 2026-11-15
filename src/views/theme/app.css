@@ -34,7 +34,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .btn-ghost:hover { background: var(--field); }
 .btn-danger { background: var(--lamp-error); color: #fff; }
 .btn-danger:hover { background: #c81616; }
-.btn-sm { min-height: 40px; padding: 0 14px; font-size: var(--fs-xs); }
+.btn-sm { min-height: var(--target); padding: 0 14px; font-size: var(--fs-xs); } /* still 48 px: touch target rule */
 .btn-lg { min-height: 56px; padding: 0 26px; font-size: var(--fs-md); }
 .btn-block { width: 100%; }
 
@@ -522,3 +522,17 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .wizard-schedule li.is-now { border-color: var(--accent); background: var(--accent-tint); }
 .wizard-schedule li.is-due { border-color: var(--lamp-error); background: var(--tint-error); }
 .wizard-schedule small { color: var(--ink-muted); }
+
+/* ---- WAAM repair screens (PLAN T15) ---------------------------------------- */
+.waam-panel { display: grid; gap: 14px; margin-top: 14px; }
+.waam-figure { width: 100%; max-width: 360px; height: auto; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius); }
+.waam-regions { display: grid; grid-template-columns: minmax(200px, 360px) 1fr; gap: 14px; align-items: start; }
+.waam-region-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.waam-region-list li.is-opened .btn { border-color: var(--accent); }
+.waam-build-head { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+.waam-chart { width: 100%; max-width: 560px; height: auto; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius); }
+.ndt-method .callout { margin-top: 10px; }
+@media (max-width: 720px) { .waam-regions { grid-template-columns: 1fr; } }
+
+/* Persona check (T17): small text is never below ~15 px for older users. */
+small { font-size: var(--fs-sm); }

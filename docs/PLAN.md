@@ -76,15 +76,23 @@ Also done (UI polish): T3 (colleagues via a controller hook), colleague photos w
 **Done on 15 Nov 2026 (night):** T4 + T12 two study versions. `src/conditions/` (chatbot, colleagues), `useCondition` / `useFeature`, `HelpController` (one logged help channel: help_opened, help_colleague_chosen, help_closed with "considered_only"), shared `HelpChat` / `ColleaguePicker`, colleague help panel. Alarm button: chatbot "Ask AI"; colleagues "Call <name>" = first AVAILABLE colleague whose expertise matches the alarm, otherwise "Call a colleague" with a list (busy colleagues can still be chosen). Old HelpModal and Messages panel are parked.
 **Done:** T5 publish both versions. `npm run build` runs `scripts/build-all.mjs`: dist/chatbot, dist/colleagues and a start page dist/index.html. Each version has its own wizard channel, and every log event has a `version` column.
 **Done:** T13 trial schedule (`services/studyScheduler.js`; wizard card "Trial schedule": from the participant code it shows variant, cell order and the planned alarm per assembly, highlights it red "DUE NOW" at its trigger step, and logs fired alarms as planned or off-script).
-**Not done yet:** T0 comments for older files, T2, T2b, T6b, T9b, T14, T15, T17. Until T6b is done, the planned GMAW ML alarms and GMAW-WP-02 point to steps after the weld (or a step that no longer exists), so they never show "DUE NOW": fire them by hand with "Fire planned alarm". Voice input in the text steps is not built.
+**Done:** T6b. The three GMAW ML alarms are now in-weld AI monitoring (seam camera + arc signals) at step `weld` and halt the cell; GMAW-ML-01 is still the false alarm. GMAW-WP-02 fires at `weld` +12 s and stays non-halting. All 18 alarms are inside the surprise window and pass the schema.
+**Done (16 Nov 2026):**
+- **T9b** quiet alerts: alerts with `stop_behaviour: "none"` are only recorded (status bar: "1 event recorded"); after the NDT they open one by one as "Assembly report · event n of m" with the same 3-button flow. Log: `quiet_alert_recorded`, `report_event_shown`, `alarm_flow_done` with `report: true`.
+- **T14 + T15** WAAM repair: steps mount (operator), scan (coverage %), mark edges (operator, AI alignment card), find damage (operator: open every area on the deviation map before confirming), AI build plan, start build (operator), layer-by-layer build with part temperature curve ("Cooling before layer n" = still running), final scan, NDT with required method (VT/PT/MT/UT/RT; PT/MT surface-only warning). Data: `src/data/scenarios/waam-baseline.json` via `services/scenarioRepository.js`.
+- **T17** persona check: all participant targets ≥ 48 px, smallest text ~15 px, one primary action per screen, every alarm sentence ≤ 12 words. Gaps: only English; no virtual light tower.
+- **T17** pilots: P01 chatbot and P02 colleagues, 8 assemblies each, logs exported (175 and 195 rows). Finding: an alarm due at an operator step could be missed by a fast participant. Fix: the wizard now **arms** the planned alarm when each assembly starts ("Auto-fire planned alarm", on by default) and the cell fires it by itself at its step.
+
+**Open:** T0 comments for older files, T2 (three cycle states), T2b (style check); translations (nl, …); virtual light tower.
+**Done:** counterbalancing. Version: odd P = chatbot, even P = colleagues. Cell order changes every two participants (P1-P2 GMAW first, P3-P4 WAAM first, ...). Variant rotates 1-2-3. P1-P12 cover all 12 combinations once. The wizard shows each participant's version and warns when the wrong version is open.
 
 **Order to finish the study app** (most important first):
 1. ~~T10 study log + export~~ (done).
 2. ~~T4 + T12 two versions~~ and ~~T5 publish both~~ (done).
 3. ~~T13 participant code + trial schedule~~ (done).
-4. **T6b + T9b** alarms only during the process; quiet alerts in the assembly report.
-5. **T14 + T15** real WAAM steps and screens.
-6. **T17** persona check and a full pilot session per build.
+4. ~~T6b + T9b~~ (done).
+5. ~~T14 + T15 WAAM steps and screens~~ (done).
+6. ~~T17 persona check + pilots~~ (done).
 *On hold (researcher's decision, 15 Nov 2026):* **T16** questionnaires (HUROX, METUX). Do not build or plan for it until asked.
 Optional any time: T0 comments, T2 three cycle states, T2b style check.
 

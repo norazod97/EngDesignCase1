@@ -107,7 +107,8 @@ export function useAlarmFlow() {
     study("alarm_flow_done", {
       choice: record.firstChoice, outcome: record.outcome, text: record.text,
       firstChoiceAfterS: record.firstChoiceAfterS, timerS: record.timerS, totalS: record.totalS,
-      helpOpened: record.helpOpened, switches: record.switches.length, details: record,
+      helpOpened: record.helpOpened, switches: record.switches.length,
+      details: { ...record, report: !!alarm?.report }, // report = handled in the assembly report (quiet alert)
     });
     if (record.helpOpened) help.closeHelp("problem_solved"); // ends the help session in the log
     actions.closeAlarm(record.outcome === "false_alarm" ? "dismissed" : "fixed", { comment: record.text });

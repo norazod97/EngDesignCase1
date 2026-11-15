@@ -17,7 +17,7 @@ function toNotification(event, state) {
     case "cycle/jobScanned":
       return { tone: "ai", title: "AI finished scanning", body: "Do the visual NDT: look at the weld and record the result.", link: "/dashboard", linkText: "Open the check" };
     case "cycle/halt":
-      return p.alarm?.halts ? null : { tone: "warning", title: p.alarm.situation, body: "Open the alarm to see what to check.", link: "/dashboard" };
+      return null; // halting alarms open the alarm window; quiet alerts stay silent until the assembly report (PLAN 2b)
     case "job/docsAttached":
       return { tone: "info", title: "Documents received", body: `CAD/WPS for ${p.jobId} are now available.` };
     default:

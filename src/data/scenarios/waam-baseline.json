@@ -4,7 +4,13 @@
   "process": "WAAM",
   "cell_profile_id": "waam-repair",
   "description": "One normal WAAM repair with no anomaly. Alarm trials reuse this timeline and inject one alarm at the alarm's trigger point. Build time is compressed for the study (one layer about 20 s).",
-  "part": { "part_id": "SHAFT-BLOCK-07", "material": "S355 steel", "cad": "shaft-block-07-intact.step", "repair_regions": 2 },
+  "part": {
+    "part_id": "SHAFT-BLOCK-07", "material": "S355 steel", "cad": "shaft-block-07-intact.step", "repair_regions": 2,
+    "regions": [
+      { "id": 1, "label": "Worn edge", "depth_mm": 3.2, "length_mm": 42, "x": 30, "y": 22, "w": 22, "h": 10 },
+      { "id": 2, "label": "Pitting on the face", "depth_mm": 1.4, "length_mm": 18, "x": 66, "y": 48, "w": 12, "h": 12 }
+    ]
+  },
   "aas_shell_id": "urn:weldsense:aas:cell:waam-01",
   "timeline": [
     { "t_s": 0,   "stage": "prepare", "step": "mount",           "event": "step_started",   "message": "Mount the part in the jaws as shown." },

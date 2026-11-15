@@ -63,8 +63,8 @@
   --font-mono: "IBM Plex Mono", "DEF Mono", ui-monospace, Consolas, monospace;
   --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
 
-  --fs-xs: 0.8125rem;
-  --fs-sm: 0.9375rem;
+  --fs-xs: 0.9rem;    /* ~15 px: smallest text (labels, tags). Raised in the T17 persona check. */
+  --fs-sm: 1rem;      /* ~17 px: secondary text */
   --fs-md: 1rem;
   --fs-lg: 1.25rem;
   --fs-xl: 1.625rem;

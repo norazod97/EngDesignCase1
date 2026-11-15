@@ -83,7 +83,7 @@
         "This wait is normal. Do not force the next layer.",
         "Watch the temperature curve go down to the dashed 200 °C line.",
         "Keep the cell door closed so the part cools evenly.",
-        "If it is still above 200 °C after 10 minutes, tell the engineer.",
+        "Still above 200 °C after 10 minutes? Tell the engineer.",
         "When the next layer starts by itself, press 'Problem solved'."
       ],
       "false_alarm_is_correct": false

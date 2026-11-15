@@ -35,16 +35,17 @@ export const STEPS_BY_PROCESS = {
     { id: "post_scan", label: "AI inspection", hint: "The AI checks the bead.", scan: true },
     { id: "ndt", label: "Visual NDT", hint: "Look at the weld and record OK or NOT OK.", operator: true },
   ],
-  // WAAM: placeholder steps until the full WAAM screens are built (PLAN task T14/T15).
+  // WAAM repair (PLAN T14). Operator steps: mount, mark, confirm areas, start build, NDT.
   WAAM: [
-    { id: "mount", label: "Mount part", hint: "The damaged part is clamped on the table." },
-    { id: "scan", label: "Scan part", hint: "The scanner measures the part." },
-    { id: "confirm_regions", label: "Find damage", hint: "The scan is compared with the CAD of the intact part." },
-    { id: "params", label: "Plan build", hint: "The build path and layers are planned." },
-    { id: "ready", label: "Ready to build", hint: "Check the plan, then press Build.", operator: true, action: "Build" },
+    { id: "mount", label: "Mount part", hint: "Clamp the part in the jaws as shown.", operator: true, action: "Part is mounted" },
+    { id: "scan", label: "Scan part", hint: "Guide the robot with the scanner over the part." },
+    { id: "mark", label: "Mark edges", hint: "Mark the edges of the damaged areas with the edge finder.", operator: true, action: "Edges marked" },
+    { id: "confirm_regions", label: "Find damage", hint: "Open each area the AI found, then confirm.", operator: true, action: "Confirm areas" },
+    { id: "params", label: "Plan build", hint: "The AI plans the layers." },
+    { id: "ready", label: "Ready to build", hint: "Check the plan, then press Start build.", operator: true, action: "Start build" },
     { id: "build", label: "Build layers", hint: "The robot adds metal layer by layer.", arc: true },
     { id: "final_scan", label: "Final scan", hint: "The AI compares the new shape with the CAD.", scan: true },
-    { id: "ndt", label: "NDT check", hint: "Check the repaired area and record OK or NOT OK.", operator: true },
+    { id: "ndt", label: "NDT check", hint: "Check the repair and record the result.", operator: true },
   ],
 };
 
@@ -72,6 +73,7 @@ export function createCellState(cell) {
     jobProgress: {}, // jobId -> { status, inspection }
     cycle: { state: CycleState.IDLE, queue: [], currentJobId: null, stepIndex: 0, stepProgress: 0, blocker: null },
     activeAlarm: null,
+    quietEvents: [], // quiet alerts (no stop) recorded during the process, shown in the assembly report (PLAN 2b)
     telemetry: { voltage: 0, current: 0, wireFeed: 0, travelSpeed: 0, penetration: 0 },
     log: [],
   };
@@ -118,9 +120,30 @@ function loadNextJob(state) {
   return withLog(s, EventCategory.PROCESS, `Started assembly ${nextId}.`, { jobId: nextId });
 }
 
+/**
+ * Assembly report (PLAN section 2b): open the next recorded quiet event of this
+ * assembly in the alarm window, with the same three buttons. Returns the state
+ * unchanged when every event has been handled.
+ */
+function showNextReportEvent(state, jobId) {
+  const all = state.quietEvents.filter((e) => e.jobId === jobId);
+  const index = state.quietEvents.findIndex((e) => e.jobId === jobId && !e.shown);
+  if (index < 0) return state;
+  const event = state.quietEvents[index];
+  const quietEvents = state.quietEvents.map((e, i) => (i === index ? { ...e, shown: true } : e));
+  const number = all.findIndex((e) => e === event) + 1;
+  const alarm = {
+    ...event.alarm,
+    raisedAt: new Date().toISOString(), // new id for the alarm flow (timer starts now)
+    report: { recordedAt: event.recordedAt, step: event.step, number, total: all.length },
+  };
+  return withLog({ ...state, quietEvents, activeAlarm: alarm }, EventCategory.ALARM, `Assembly report: event ${number} of ${all.length} (${alarm.situation}).`, { alarmId: alarm.id, report: true });
+}
+
 // ---- guards (used by the gateway before accepting a command) --------------
 
 export function canStart(state) {
+  if (state.activeAlarm) return { ok: false, reason: "Finish the assembly report first." };
   if (!state.door.locked) return { ok: false, reason: "Lock the cell door first." };
   if (!state.bin.inEnvelope) return { ok: false, reason: "Move the parts bin back to its marked spot." };
   if (STOPPABLE_STATES.includes(state.cycle.state)) return { ok: false, reason: "A cycle is already active." };
@@ -157,7 +180,9 @@ export function cellReducer(state, event) {
     case "cycle/start": {
       const jobs = { ...state.jobs };
       p.jobs.forEach((j) => { jobs[j.id] = j; });
-      let s = { ...state, jobs, cycle: { ...state.cycle, queue: p.jobs.map((j) => j.id), blocker: null } };
+      // New assembly: clear the WAAM readings of the previous one (scan coverage, layers, temperatures).
+      let s = { ...state, jobs, cycle: { ...state.cycle, queue: p.jobs.map((j) => j.id), blocker: null },
+        telemetry: { ...state.telemetry, scanCoverage: 0, layer: null, layers: null, phase: null, interpassC: null, tempHistory: [] } };
       p.jobs.forEach((j) => { s = setJob(s, j.id, { status: JobStatus.QUEUED }); });
       s = withLog(s, EventCategory.OPERATOR, `Cycle started for ${p.jobs.length} assembl${p.jobs.length === 1 ? "y" : "ies"}.`, { by: p.by, checklist: p.checklist });
       return loadNextJob(s);
@@ -195,6 +220,13 @@ export function cellReducer(state, event) {
 
     case "cycle/halt": {
       const alarm = { ...p.alarm, raisedAt: new Date().toISOString(), jobId: state.cycle.currentJobId };
+      // Quiet alert (stop_behaviour "none"): do NOT open the alarm window and do not stop.
+      // Only record it; it is shown in the assembly report after the NDT (PLAN section 2b).
+      if (!alarm.halts) {
+        const step = state.steps[state.cycle.stepIndex];
+        const event = { alarm, recordedAt: alarm.raisedAt, jobId: alarm.jobId, step: step?.label, shown: false };
+        return withLog({ ...state, quietEvents: [...state.quietEvents, event] }, EventCategory.ALARM, `Event recorded: ${alarm.situation}.`, { alarmId: alarm.id, quiet: true });
+      }
       let s = { ...state, activeAlarm: alarm };
       if (alarm.halts) {
         s = { ...s, cycle: { ...s.cycle, state: CycleState.HALTED } };
@@ -209,7 +241,9 @@ export function cellReducer(state, event) {
       let s = { ...state, activeAlarm: null };
       s = setEquipment(s, (e) => (e.status === EquipmentStatus.FAULT ? EquipmentStatus.IDLE : undefined));
       const verb = { fixed: "checked and fixed", dismissed: "dismissed as not relevant", help: "handed over to support" }[p.resolution] ?? p.resolution;
-      return withLog(s, EventCategory.OPERATOR, `Alarm "${alarm.situation}" ${verb}.`, { by: p.by, comment: p.comment, stepsDone: p.stepsDone, aiCause: alarm.assessment?.cause });
+      s = withLog(s, EventCategory.OPERATOR, `Alarm "${alarm.situation}" ${verb}.`, { by: p.by, comment: p.comment, stepsDone: p.stepsDone, aiCause: alarm.assessment?.cause });
+      // In the assembly report: open the next recorded event, if any.
+      return alarm.report ? showNextReportEvent(s, alarm.jobId) : s;
     }
 
     case "cycle/resume": {
@@ -260,7 +294,8 @@ export function cellReducer(state, event) {
       // Visual NDT of the current assembly finishes it; the cell moves on.
       const atNdt = state.steps[state.cycle.stepIndex]?.id === "ndt";
       if (p.jobId === state.cycle.currentJobId && atNdt && state.cycle.state === CycleState.AWAITING_OPERATOR) s = loadNextJob(s);
-      return s;
+      // Assembly finished: open the assembly report if quiet events were recorded for it.
+      return showNextReportEvent(s, p.jobId);
     }
 
     case "request/log":

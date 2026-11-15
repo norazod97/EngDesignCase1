@@ -202,7 +202,7 @@
           "limit": "no"
         }
       ],
-      "operator_message": "In layer 5 the robot cannot reach the inner corner with the right torch angle.",
+      "operator_message": "In layer 5, the robot cannot reach the inner corner. The torch angle is wrong there.",
       "technical_detail": "Reachability check: at the inner corner of layer 5 the required torch orientation pushes axis 5 past its joint limit, so a 35 mm segment would be skipped. Rotating the part or relaxing the torch angle solves it.",
       "ai_decision": null,
       "ground_truth": {

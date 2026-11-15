@@ -5,6 +5,9 @@
 export const ALARM_TEXT = {
   eyebrowHalt: "Cell halted",
   eyebrowCheck: "Please check",
+  eyebrowReport: (n, total) => `Assembly report · event ${n} of ${total}`,
+  recordedDuring: (step, time) => `Recorded during "${step}" at ${time}. The cell did not stop.`,
+  eventsRecorded: (n) => `${n} event${n === 1 ? "" : "s"} recorded`,
   errorCode: "Error code",
   whatHappened: "What happened",
   measurements: "Measurements",
@@ -63,4 +66,31 @@ export const HELP_TEXT = {
   panelTitleColleagues: "Call a colleague",
   close: "Close",
   callSomeone: "Call a colleague",
+};
+
+// TEXT — WAAM repair screens (PLAN T15).
+export const WAAM_TEXT = {
+  mountFigure: "The part clamped between two jaws",
+  mountCaption: "Part in the middle, jaws tight",
+  coverage: "Scan coverage",
+  alignment: "Scan vs drawing",
+  regionsTitle: "Damaged areas found",
+  mapFigure: "Map of the part with the damaged areas",
+  openArea: (n) => `Open area ${n}`,
+  areaDetail: (depth, length) => `Depth ${depth} mm · length ${length} mm`,
+  openAll: (n) => `Open ${n} more area${n === 1 ? "" : "s"} before you confirm.`,
+  planTitle: "Build plan",
+  planning: "The AI is planning the layers…",
+  lockDoor: "Lock door",
+  layerOf: (n, total) => `Layer ${n} of ${total}`,
+  adding: "Adding metal",
+  cooling: (next) => `Cooling before layer ${next}`,
+  interpass: "Part temperature",
+  chartLabel: "Part temperature during the build",
+  chartAxis: "Temperature over time",
+  maxLine: (max) => `next layer starts below ${max} °C`,
+  finalScan: "The AI compares the new shape with the drawing.",
+  ndtMethod: "Which NDT method did you use?",
+  ndtSurfaceWarning: "PT and MT only find cracks at the surface. Inside defects need UT or RT.",
+  ndtMethodRequired: "Choose the NDT method first.",
 };

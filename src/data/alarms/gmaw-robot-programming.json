@@ -34,7 +34,7 @@
           "limit": 0.5
         }
       ],
-      "operator_message": "In the dry run the torch moved off the seam near the end. Do not weld yet.",
+      "operator_message": "In the dry run, the torch left the seam near the end.",
       "technical_detail": "The seam-scan correction was applied to the start point only; the end waypoints kept their nominal positions, so the torch path drifts 2.6 mm from the measured seam over the last 80 mm.",
       "ai_decision": null,
       "ground_truth": {
@@ -75,7 +75,7 @@
       "literature": "Seam finding and path correction before welding: Curiel et al. 2023; Li et al. 2026.",
       "resolution_script": [
         "Do not weld yet.",
-        "Open the 3D view and compare the blue seam with the orange path.",
+        "Open the 3D view. Compare the blue seam with the orange path.",
         "Press 'Path correction' and choose 'Whole seam'.",
         "Run the dry run again.",
         "The path must stay within 0.5 mm along the whole seam.",
@@ -247,7 +247,7 @@
         "Do not weld: the program is for another part.",
         "Read the part label: it says BRACKET-B.",
         "Press 'Change program' and choose BRACKET-B.",
-        "Run the dry run again and check the path ends at the seam end.",
+        "Run the dry run again. Check that the path ends at the seam end.",
         "When the dry run is green, press 'Problem solved'."
       ],
       "false_alarm_is_correct": false

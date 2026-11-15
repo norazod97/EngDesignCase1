@@ -12,6 +12,7 @@ import { InspectionModal } from "../modals/InspectionModal.jsx";
 import { WpsModal } from "../modals/WpsModal.jsx";
 import { PrepareCellModal } from "../modals/PrepareCellModal.jsx";
 import { ProcessTracker } from "../widgets/ProcessTracker.jsx";
+import { WaamPanel } from "../widgets/WaamPanel.jsx";
 import { EquipmentWidget } from "../widgets/Widgets.jsx";
 // parked for the study (PLAN T1): StockWidget, HistorianWidget, LabelingWidget, TelemetryWidget (weld signals).
 
@@ -64,10 +65,11 @@ function AssemblyList({ onStart, onOpenWps }) {
                   {a.wps ? <Button variant="ghost" size="sm" icon="file" onClick={() => onOpenWps(a)}>Open PDF</Button> : <Tag tone="error" icon="alert">Missing</Tag>}
                 </td>
                 <td data-label="Status"><Tag tone={STATUS_TONE[a.status]}>{a.statusText}</Tag></td>
-                {/* Start button only on the next assembly, and only when the cell is free. */}
+                {/* Start button only on the next assembly, and only when the cell is free
+                    (persona check T17: never a greyed-out second primary button). */}
                 <td data-label="">
-                  {a.isNext && (
-                    <Button variant="accent" size="lg" icon="play" disabled={!a.canStart} onClick={() => onStart(a)}>Start</Button>
+                  {a.canStart && (
+                    <Button variant="accent" size="lg" icon="play" onClick={() => onStart(a)}>Start</Button>
                   )}
                 </td>
               </tr>
@@ -85,7 +87,7 @@ function AssemblyList({ onStart, onOpenWps }) {
 /** The assembly in the cell: its steps, and what the operator must do now. */
 function CycleCard() {
   const { state, actions } = useCell();
-  const { cycle, active, steps, step, jobName, waitingFor, ndtItem } = useCellSummary();
+  const { cycle, active, steps, step, jobName, waitingFor, ndtItem, process } = useCellSummary();
   const { requestHelp } = useOutletContext();
   const [error, setError] = useState("");
   const [ndtOpen, setNdtOpen] = useState(false);
@@ -108,8 +110,11 @@ function CycleCard() {
     <Card title="Now in the cell" icon="robot" className="span-2" tone={cycle.state === CycleState.HALTED ? "error" : undefined}>
       <ProcessTracker cycle={cycle} steps={steps} jobName={jobName} />
 
-      {/* Operator step 1: check the path / plan, then start the arc. */}
-      {waitingFor === "ready" && (
+      {/* WAAM repair: its own screens for each step (mount, scan, areas, plan, layers). */}
+      {process === "WAAM" && <WaamPanel />}
+
+      {/* GMAW operator step: check the path, then press Weld. (WAAM has this in WaamPanel.) */}
+      {waitingFor === "ready" && process !== "WAAM" && (
         <div className="callout callout-accent">
           <Icon name="play" />
           <div>

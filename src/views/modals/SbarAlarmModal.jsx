@@ -34,7 +34,7 @@ export function SbarAlarmModal() {
       dismissible={false}
       tone={alarm.halts ? "error" : "warning"}
       size="lg"
-      eyebrow={`${alarm.halts ? T.eyebrowHalt : T.eyebrowCheck}${alarm.errorCode ? ` · ${T.errorCode} ${alarm.errorCode}` : ""}`}
+      eyebrow={`${alarm.report ? T.eyebrowReport(alarm.report.number, alarm.report.total) : alarm.halts ? T.eyebrowHalt : T.eyebrowCheck}${alarm.errorCode ? ` · ${T.errorCode} ${alarm.errorCode}` : ""}`}
       title={<><Icon name="alert" size={28} /> {titles[flow.step]}</>}
     >
       {/* Count-up timer: shown on the fix and help steps (and while writing after them). */}
@@ -74,7 +74,12 @@ function ChooseStep({ alarm, onChoose, help }) {
       <section className="sbar-block">
         <h3><span className="sbar-letter">S</span> {T.whatHappened}</h3>
         <p className="sbar-lead">{alarm.background}</p>
-        <p className="sbar-meta">{new Date(alarm.raisedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</p>
+        <p className="sbar-meta">
+          {/* Report events: when it was recorded. Live alarms: when it happened. */}
+          {alarm.report
+            ? T.recordedDuring(alarm.report.step, new Date(alarm.report.recordedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }))
+            : new Date(alarm.raisedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+        </p>
       </section>
 
       {/* B: the measurements that triggered the alarm. */}

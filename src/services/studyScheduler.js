@@ -1,7 +1,9 @@
 // SERVICE — the trial schedule of one participant (PLAN task T13, decision D5 = fixed).
 //
 // Everything comes from src/data/study/study-design.json:
-//   - cell order: alternates by participant number (P1: GMAW then WAAM, P2: WAAM then GMAW, ...),
+//   - help version: odd numbers chatbot (A), even numbers colleagues (B),
+//   - cell order: changes every TWO participants (P1-P2 GMAW first, P3-P4 WAAM first, ...),
+//     so the cell order is not tied to the help version,
 //   - trial order inside each cell: FIXED (no anomaly, welding process, robot programming, ML),
 //   - alarm variant: rotates by participant number (P1 -> variant 1, P2 -> 2, P3 -> 3, P4 -> 1, ...).
 // So assembly 2 of P5 in the GMAW cell gets alarm GMAW-WP-02, and so on.
@@ -20,13 +22,17 @@ export function participantNumber(code) {
 
 /**
  * The full schedule for participant number n.
- * Out: { n, variant, blocks: [{ process, order, trials: [{ assembly, type, label, alarmId }] }] }
+ * Out: { n, version, variant, blocks: [{ process, order, trials: [{ assembly, type, label, alarmId }] }] }
  *      alarmId is null for the assembly without anomaly.
  */
 export function scheduleFor(n) {
   const { ordering, trial_types: types } = DESIGN;
   const sequences = ordering.process_block_order.sequences;
-  const processes = sequences[(n - 1) % sequences.length]; // e.g. ["GMAW", "WAAM"]
+  // Cell order in pairs: P1, P2 -> first order; P3, P4 -> second order; P5, P6 -> first again.
+  const processes = sequences[Math.floor((n - 1) / 2) % sequences.length]; // e.g. ["GMAW", "WAAM"]
+  // Help version: odd -> A_chatbot, even -> B_colleagues.
+  const levels = DESIGN.design.between_subjects.levels;
+  const version = levels[(n - 1) % levels.length];
   const variants = ordering.alarm_variant.variants;
   const variant = variants[(n - 1) % variants.length];
   const order = ordering.trial_order_within_block.fixed; // D5 = fixed
@@ -41,5 +47,5 @@ export function scheduleFor(n) {
       alarmId: TYPE_CODE[type] ? `${process}-${TYPE_CODE[type]}-0${variant}` : null,
     })),
   }));
-  return { n, variant, blocks };
+  return { n, version, variant, blocks };
 }

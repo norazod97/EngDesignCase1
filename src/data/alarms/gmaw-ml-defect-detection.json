@@ -86,7 +86,7 @@
       "resolution_script": [
         "Do not scrap the part.",
         "Open the heatmap: the red spot is on a bright reflection.",
-        "Open the bead profile at the same place: depth 0.05 mm, limit 0.5 mm.",
+        "Open the bead profile at that spot: depth 0.05 mm, limit 0.5 mm.",
         "Look at the bead yourself. No undercut means the AI was wrong.",
         "Press 'Problem solved' and write what you saw, e.g. 'reflection'."
       ],

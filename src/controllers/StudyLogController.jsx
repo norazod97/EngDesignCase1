@@ -4,7 +4,7 @@
 // the ones that matter for the analysis: assemblies, steps, alarms, operator
 // actions, safety. The alarm flow and the chat write their own, more detailed
 // events (see AlarmFlowController and AssistantController).
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { appendEvent } from "../services/studyLog.js";
 import { useCell } from "./CellController.jsx";
 
@@ -28,7 +28,9 @@ function toStudyEvent(event, state) {
     case "inspection/confirm":
       return { type: "ndt_result", outcome: p.operatorVerdict, text: p.comment };
     case "cycle/halt":
-      return { type: "alarm_shown", alarmId: p.alarm.id, errorCode: p.alarm.errorCode, outcome: p.alarm.halts ? "halts_cell" : "warning" };
+      return p.alarm.halts
+        ? { type: "alarm_shown", alarmId: p.alarm.id, errorCode: p.alarm.errorCode, outcome: "halts_cell" }
+        : { type: "quiet_alert_recorded", alarmId: p.alarm.id, errorCode: p.alarm.errorCode, outcome: "no_stop" };
     case "alarm/close":
       return { type: "alarm_closed", outcome: p.resolution, text: p.comment };
     case "cycle/resume":
@@ -52,8 +54,15 @@ function toStudyEvent(event, state) {
 /** Mount once inside <CellController>. Renders nothing. */
 export function StudyLogController({ children }) {
   const { gateway } = useCell();
+  const lastReport = useRef(null); // last report event already logged
 
   useEffect(() => gateway.onEvent((event, state) => {
+    // Assembly report: a recorded quiet event is now shown in the alarm window.
+    const a = state.activeAlarm;
+    if (a?.report && a.raisedAt !== lastReport.current) {
+      lastReport.current = a.raisedAt;
+      appendEvent("participant", { process: state.process, cellId: state.cellId, assembly: a.jobId, type: "report_event_shown", alarmId: a.id, errorCode: a.errorCode, details: a.report });
+    }
     const e = toStudyEvent(event, state);
     if (!e) return;
     // Every event also says which cell and assembly it belongs to.

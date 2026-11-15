@@ -77,11 +77,32 @@ export function WizardPage() {
   const nowAssembly = Number(s?.cycle.currentJobId?.match(/A(\d)$/)?.[1]) || null;
   const nowStep = s?.cycle.currentJobId ? s?.steps?.[s.cycle.stepIndex]?.id : null;
 
+  // Auto-fire (default on): when an assembly starts, arm its planned alarm. The cell
+  // then fires it by itself at the trigger step, so it cannot be missed.
+  const [autoFire, setAutoFire] = useState(true);
+  const armedFor = useRef(null); // "P05|GMAW|3": which assembly was already armed
+  useEffect(() => {
+    if (!autoFire || !block || !nowAssembly || !s?.cycle.currentJobId) return;
+    const key = `${pNum}|${block.process}|${nowAssembly}|${s.cycle.currentJobId}`;
+    if (armedFor.current === key) return;
+    armedFor.current = key;
+    const trial = block.trials.find((t) => t.assembly === nowAssembly);
+    const alarm = trial?.alarmId ? getAlarm(trial.alarmId) : null;
+    if (!alarm) return;
+    channel.current?.post({ type: "cmd", name: "arm", args: { id: alarm.id, step: alarm.trigger?.step, offset: alarm.trigger?.offset_s } });
+    appendEvent("wizard", { type: "wizard_alarm_armed", alarmId: alarm.id, choice: "planned_auto", details: { step: alarm.trigger?.step } });
+  }, [autoFire, block, nowAssembly, pNum, s?.cycle.currentJobId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // All events, with the scoring column filled in for finished alarm flows.
   function exportRows() {
     return readAll().map((e) => (e.type === "alarm_flow_done" ? { ...e, falseAlarmCorrect: isOutcomeCorrect(e.alarmId, e.outcome) } : e));
   }
-  const fileBase = () => `corob-log-${code || "no-code"}-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-")}`;
+  // File name with the LOCAL date and time, e.g. corob-log-P07-2026-11-16-09-30 (the times inside the log are UTC).
+  const fileBase = () => {
+    const d = new Date();
+    const two = (n) => String(n).padStart(2, "0");
+    return `corob-log-${code || "no-code"}-${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}-${two(d.getHours())}-${two(d.getMinutes())}`;
+  };
   function exportJson() { downloadText(`${fileBase()}.json`, JSON.stringify(exportRows(), null, 2), "application/json"); }
   function exportCsv() { downloadText(`${fileBase()}.csv`, toCsv(exportRows()), "text/csv"); }
   function clearAll() {
@@ -131,8 +152,14 @@ export function WizardPage() {
         <Card title="Trial schedule">
           {!schedule ? <p className="muted">Type a participant code with a number (e.g. P07) to see the schedule.</p> : (
             <div className="stack">
+              <div className="row">Auto-fire planned alarm at its step <Switch checked={autoFire} onChange={setAutoFire} /></div>
+              {sim?.armed && <p className="tag tag-info">Armed: {sim.armed} (fires by itself at its step)</p>}
+              {/* Which study version this participant must use, and a warning if another one is running. */}
+              {build && !build.id.startsWith(schedule.version) && (
+                <p className="callout callout-error"><strong>Wrong version!</strong> P{schedule.n} needs {schedule.version.replace("_", " ")}, but this console runs {build.id.replace("_", " ")}.</p>
+              )}
               <p>
-                <strong>P{schedule.n}</strong> · alarm variant {schedule.variant} · cell order:{" "}
+                <strong>P{schedule.n}</strong> · version {schedule.version.replace("_", " ")} · alarm variant {schedule.variant} · cell order:{" "}
                 {schedule.blocks.map((b) => `${b.order}. ${b.process}`).join("  →  ")}
               </p>
               {!block ? <p className="muted">The participant tab is not signed in to a cell yet.</p> : (
@@ -149,7 +176,7 @@ export function WizardPage() {
                             <span> · {alarm.id} · {alarm.title}</span>
                             <small> · fire at step "{alarm.trigger?.step}"{alarm.trigger?.layer ? `, layer ${alarm.trigger.layer}` : ""}{alarm.trigger?.offset_s ? `, +${alarm.trigger.offset_s} s` : ""}</small>
                             {isNow && (
-                              <Button variant={due ? "danger" : "ink"} size="sm" onClick={() => cmd("alarm", { id: alarm.id, planned: true })}>
+                              <Button variant={due ? "danger" : "ink"} size="sm" onClick={() => { channel.current?.post({ type: "cmd", name: "arm", args: {} }); cmd("alarm", { id: alarm.id, planned: true }); }}>
                                 {due ? "DUE NOW · fire" : "Fire planned alarm"}
                               </Button>
                             )}

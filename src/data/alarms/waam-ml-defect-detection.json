@@ -242,7 +242,7 @@
           "limit": 5
         }
       ],
-      "operator_message": "The AI proposes 7 layers but is not sure: it has seen only one repair like this.",
+      "operator_message": "The AI proposes 7 layers. It is not sure: it saw only one similar repair.",
       "technical_detail": "Bead-geometry regressor proposes 7 layers at 2.0 mm with a wide 90% interval (5-9 layers); the thin-wall geometry is outside most of the training data (only 1 similar case). Models trained on single beads on flat plates transfer poorly to such geometry.",
       "ai_decision": {
         "ai_function_key": "param_proposal",

@@ -83,6 +83,8 @@ Also done (UI polish): T3 (colleagues via a controller hook), colleague photos w
 - **T17** persona check: all participant targets ≥ 48 px, smallest text ~15 px, one primary action per screen, every alarm sentence ≤ 12 words. Gaps: only English; no virtual light tower.
 - **T17** pilots: P01 chatbot and P02 colleagues, 8 assemblies each, logs exported (175 and 195 rows). Finding: an alarm due at an operator step could be missed by a fast participant. Fix: the wizard now **arms** the planned alarm when each assembly starts ("Auto-fire planned alarm", on by default) and the cell fires it by itself at its step.
 
+**Done:** cell camera. `src/data/cameras/camera-views.json` maps a muted clip (public/videos/<process>/<step>.mp4 + poster .jpg) to each step; `CameraFeed` plays it while running and freezes it when stopped. GMAW: all 7 steps (5 clips + stills for Ready to weld and Visual NDT). WAAM: Scan only; the WAAM demonstrator has no usable clean footage for the other steps (people, overlays, blurry montage) - ask the R&D centre for raw clips. Source: COROB demonstrator videos, R&D centre consent obtained. Clips must stay neutral (never show the anomaly before the alarm).
+
 **Open:** T0 comments for older files, T2 (three cycle states), T2b (style check); translations (nl, …); virtual light tower.
 **Done:** counterbalancing. Version: odd P = chatbot, even P = colleagues. Cell order changes every two participants (P1-P2 GMAW first, P3-P4 WAAM first, ...). Variant rotates 1-2-3. P1-P12 cover all 12 combinations once. The wizard shows each participant's version and warns when the wrong version is open.
 

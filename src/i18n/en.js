@@ -94,3 +94,12 @@ export const WAAM_TEXT = {
   ndtSurfaceWarning: "PT and MT only find cracks at the surface. Inside defects need UT or RT.",
   ndtMethodRequired: "Choose the NDT method first.",
 };
+
+// TEXT — cell camera.
+export const CAMERA_TEXT = {
+  live: "Live",
+  paused: "Paused",
+  simulated: "simulated",
+  bigger: "Bigger view",
+  smaller: "Smaller view",
+};

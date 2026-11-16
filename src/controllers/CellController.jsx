@@ -1,6 +1,7 @@
 // CONTROLLER — exposes the cell model to views and turns UI intents into
 // gateway commands. Views never import the gateway or the reducer directly.
 import { createContext, useContext, useMemo, useSyncExternalStore } from "react";
+import { cameraFor } from "../services/cameraRepository.js";
 import { createCellGateway } from "../services/gateway/index.js";
 import { createWizardChannel } from "../services/wizardChannel.js";
 import { CycleState, STOPPABLE_STATES } from "../models/cellModel.js";
@@ -67,6 +68,20 @@ export function useCellSummary() {
     const ndtItem = waitingFor === "ndt" ? { id: cycle.currentJobId, ...state.jobProgress[cycle.currentJobId], job: state.jobs[cycle.currentJobId] } : null;
     return { total: jobs.length, finished, steps, step, jobName, overall, active, canStop, waitingFor, ndtItem, cycle, process: state.process, cellName: state.name };
   }, [state, jobs]);
+}
+
+/**
+ * Camera clip for the step in the cell now, or null.
+ * live = true while the cell is running (the clip plays), false when it is stopped.
+ */
+export function useCameraView() {
+  const { state } = useCell();
+  const { cycle } = state;
+  const step = cycle.currentJobId ? state.steps[cycle.stepIndex] : null;
+  return useMemo(() => {
+    const cam = step ? cameraFor(state.process, step.id) : null;
+    return cam ? { ...cam, live: cycle.state === CycleState.RUNNING && !state.activeAlarm } : null;
+  }, [state.process, step, cycle.state, state.activeAlarm]);
 }
 
 // Status words for the assembly list (short, plain language).

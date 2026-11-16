@@ -542,3 +542,16 @@ small { font-size: var(--fs-sm); }
 .dash-grid.is-running > .cycle-card .card-title { font-size: var(--fs-xl); }
 
 .assembly-table .nowrap { white-space: nowrap; }
+
+/* ---- Cell camera ------------------------------------------------------------ */
+.camera { position: relative; margin: 14px 0 0; max-width: 640px; border-radius: var(--radius); overflow: hidden; background: #000; }
+.camera.is-big { max-width: none; }
+.camera video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+.camera-bar { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 12px; background: linear-gradient(rgba(0,0,0,.65), rgba(0,0,0,0)); color: #fff; font: 600 var(--fs-xs) var(--font-mono); text-transform: uppercase; }
+.camera-live { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: var(--radius); background: rgba(0,0,0,.5); }
+.camera-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--lamp-off); }
+.camera-live.is-live .camera-dot { background: var(--lamp-error); animation: lamp-blink 1.2s infinite; }
+.camera-sim { margin-left: auto; opacity: .8; text-transform: none; font-weight: 400; }
+.camera-size { color: #fff; }
+.camera-paused { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.35); color: #fff; pointer-events: none; }
+.camera-still { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }

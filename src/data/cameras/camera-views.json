@@ -1,0 +1,15 @@
+{
+  "description": "Camera clips shown in 'Now in the cell', one per process step. Files live in public/videos/<process>/. Video: MP4 (H.264), 720p, 5-15 s, NO sound, under ~5 MB. Poster: a still image shown while loading and when the cell is stopped. An entry with only a poster shows a still (used for operator steps). Steps without an entry show no camera panel. Keep clips neutral: never show the anomaly before the alarm. Source: COROB demonstrator videos (R&D centre consent given); no people, captions or overlays in the cuts.",
+  "GMAW": {
+    "load": { "video": "videos/gmaw/load.mp4", "poster": "videos/gmaw/load.jpg", "label": "Cell camera · pick & align" },
+    "seam_scan": { "video": "videos/gmaw/seam_scan.mp4", "poster": "videos/gmaw/seam_scan.jpg", "label": "Cell camera · find the seam" },
+    "dry_run": { "video": "videos/gmaw/dry_run.mp4", "poster": "videos/gmaw/dry_run.jpg", "label": "Cell camera · dry run" },
+    "ready": { "poster": "videos/gmaw/ready.jpg", "label": "Cell camera · torch at the start of the seam" },
+    "weld": { "video": "videos/gmaw/weld.mp4", "poster": "videos/gmaw/weld.jpg", "label": "Cell camera · weld" },
+    "post_scan": { "video": "videos/gmaw/post_scan.mp4", "poster": "videos/gmaw/post_scan.jpg", "label": "Cell camera · AI inspection" },
+    "ndt": { "poster": "videos/gmaw/ndt.jpg", "label": "Cell camera · part on the scan table" }
+  },
+  "WAAM": {
+    "scan": { "video": "videos/waam/scan.mp4", "poster": "videos/waam/scan.jpg", "label": "Cell camera · scan part" }
+  }
+}

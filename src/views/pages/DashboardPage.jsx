@@ -14,6 +14,7 @@ import { WpsModal } from "../modals/WpsModal.jsx";
 import { PrepareCellModal } from "../modals/PrepareCellModal.jsx";
 import { ProcessTracker } from "../widgets/ProcessTracker.jsx";
 import { WaamPanel } from "../widgets/WaamPanel.jsx";
+import { CameraFeed } from "../widgets/CameraFeed.jsx";
 import { EquipmentWidget } from "../widgets/Widgets.jsx";
 // parked for the study (PLAN T1): StockWidget, HistorianWidget, LabelingWidget, TelemetryWidget (weld signals).
 
@@ -115,6 +116,9 @@ function CycleCard() {
   return (
     <Card title="Now in the cell" icon="robot" className="span-2 cycle-card" tone={cycle.state === CycleState.HALTED ? "error" : undefined}>
       <ProcessTracker cycle={cycle} steps={steps} jobName={jobName} />
+
+      {/* Cell camera: clip of the current step (only steps that have a clip). */}
+      <CameraFeed />
 
       {/* WAAM repair: its own screens for each step (mount, scan, areas, plan, layers). */}
       {process === "WAAM" && <WaamPanel />}

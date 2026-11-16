@@ -536,3 +536,9 @@ button, input, textarea, select { font: inherit; color: inherit; }
 
 /* Persona check (T17): small text is never below ~15 px for older users. */
 small { font-size: var(--fs-sm); }
+
+/* While an assembly is in the cell: "Now in the cell" is the full-width centre of the page. */
+.dash-grid.is-running > .cycle-card { grid-column: 1 / -1; }
+.dash-grid.is-running > .cycle-card .card-title { font-size: var(--fs-xl); }
+
+.assembly-table .nowrap { white-space: nowrap; }

@@ -11,10 +11,16 @@
 // Privacy (CLAUDE.md rule 8): only the participant CODE is stored, never a name.
 
 import { CONDITION } from "../conditions/index.js";
+import { createWizardChannel } from "./wizardChannel.js";
 
 const KEY_PREFIX = "corob:studylog:";
 const CODE_KEY = "corob:participantCode";
-const SOURCES = ["participant", "wizard"];
+// "remote" = participant events received from ANOTHER device (two-device sessions).
+const SOURCES = ["participant", "wizard", "remote"];
+
+// Channel used to copy participant events to the wizard (created on first use).
+let channel = null;
+const getChannel = () => (channel ??= createWizardChannel());
 
 // Columns of the CSV file, in this order. Every event can fill any of them.
 export const CSV_COLUMNS = [
@@ -69,21 +75,40 @@ export function setParticipantCode(code) {
  */
 export function appendEvent(source, event) {
   const list = readList(source);
+  // id = unique per event (removes duplicates when the same event arrives twice).
   // version = which study version wrote it (A_chatbot / B_colleagues).
-  list.push({ at: new Date().toISOString(), participant: getParticipantCode(), version: CONDITION.id, source, ...event });
+  const entry = { id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`, at: new Date().toISOString(), participant: getParticipantCode(), version: CONDITION.id, source, ...event };
+  list.push(entry);
   writeList(source, list);
+  // Two devices: the participant's tablet keeps its own copy AND sends every event
+  // to the wizard, so the wizard's export contains everything.
+  if (source === "participant") getChannel().post({ type: "log-event", event: entry });
+}
+
+/**
+ * Wizard side: save a participant event that came from the other device.
+ * The participant code is the wizard's code (the tablet may not have one set).
+ */
+export function storeRemoteEvent(event) {
+  if (!event?.id) return;
+  if (SOURCES.some((s) => readList(s).some((e) => e.id === event.id))) return; // already stored
+  const list = readList("remote");
+  list.push({ ...event, participant: event.participant || getParticipantCode() });
+  writeList("remote", list);
 }
 
 // ---- reading and export ----------------------------------------------------
 
-/** All events of both tabs, oldest first. */
+/** All events (this device + received from the other device), each once, oldest first. */
 export function readAll() {
-  return SOURCES.flatMap(readList).sort((a, b) => a.at.localeCompare(b.at));
+  const byId = new Map();
+  SOURCES.flatMap(readList).forEach((e) => { if (!e.id || !byId.has(e.id)) byId.set(e.id ?? Math.random(), e); });
+  return [...byId.values()].sort((a, b) => a.at.localeCompare(b.at));
 }
 
 /** Number of events in the log. */
 export function countEvents() {
-  return SOURCES.reduce((n, s) => n + readList(s).length, 0);
+  return readAll().length;
 }
 
 /** Delete the whole log (after it has been exported). */

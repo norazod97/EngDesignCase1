@@ -103,7 +103,7 @@ export function WaamPanel() {
           <Icon name="wrench" />
           <div className="stack">
             <strong>{w.step.label}</strong>
-            <p>{s.messages.mount ?? w.step.hint}</p>
+            {/* The instruction is already shown under the step bar; here only the picture and the button. */}
             <MountGuide />
             <p className="muted">{T.mountCaption}</p>
             <div className="row">{button(w.step.action)}</div>
@@ -128,7 +128,6 @@ export function WaamPanel() {
             <Icon name="eye" />
             <div className="stack">
               <strong>{w.step.label}</strong>
-              <p>{s.messages.mark ?? w.step.hint}</p>
               <div className="row">{button(w.step.action)}</div>
             </div>
           </div>

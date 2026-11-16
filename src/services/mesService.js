@@ -7,6 +7,15 @@ import STUDY_DESIGN from "../data/study/study-design.json";
 import ROSTER from "../data/people/colleagues.json";
 
 const delay = (ms = 150) => new Promise((r) => setTimeout(r, ms));
+
+/** Date `days` from today at "HH:MM" (local time), as an ISO string. Negative days = in the past. */
+function relativeDate(days, time) {
+  const [h, m] = time.split(":").map(Number);
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(h, m, 0, 0);
+  return d.toISOString();
+}
 const clone = (x) => structuredClone(x);
 
 export async function authenticate(operatorId, password) {
@@ -33,7 +42,8 @@ export async function getShiftAssignment(operatorId) {
   const shift = SHIFTS[operatorId];
   if (!shift) return null;
   const perProcess = STUDY_DESIGN.design?.assemblies_per_process ?? 4;
-  const jobs = JOBS.filter((j) => j.cellId === shift.cellId).slice(0, perProcess);
+  const jobs = JOBS.filter((j) => j.cellId === shift.cellId).slice(0, perProcess)
+    .map((j) => ({ ...j, receivedAt: relativeDate(-j.received.daysAgo, j.received.time), dueAt: relativeDate(j.due.inDays, j.due.time) }));
   return { shift: clone(shift), jobs: clone(jobs) };
 }
 

@@ -6,7 +6,7 @@ import { AI_ADJUSTMENTS } from "../../mock/scenarios.js";
 // The wizard is the researcher's tool, so it reads the alarm database directly.
 import { getAlarm, isOutcomeCorrect, listAlarms } from "../../services/alarmRepository.js";
 import { participantNumber, scheduleFor } from "../../services/studyScheduler.js";
-import { appendEvent, clearLog, countEvents, downloadText, getParticipantCode, readAll, setParticipantCode, toCsv } from "../../services/studyLog.js";
+import { appendEvent, clearLog, countEvents, downloadText, getParticipantCode, readAll, setParticipantCode, storeRemoteEvent, toCsv } from "../../services/studyLog.js";
 import { EquipmentStatus } from "../../models/equipment.js";
 import { formatTime } from "../../models/job.js";
 import { Button, Card, StatusLamp, Switch } from "../components/primitives.jsx";
@@ -36,6 +36,7 @@ export function WizardPage() {
       if (msg?.type === "chat" && msg.from === "operator") setChat((c) => [...c, { from: "operator", text: msg.text, at: new Date().toISOString() }]);
       if (msg?.type === "help-opened") setHelpNote({ ...msg, at: new Date().toISOString() });
       if (msg?.type === "condition") setBuild(msg);
+      if (msg?.type === "log-event") storeRemoteEvent(msg.event); // participant event from the other device
     });
     channel.current.post({ type: "hello" });
     return () => { off(); channel.current.close(); };
@@ -130,6 +131,7 @@ export function WizardPage() {
         <h1>Wizard console</h1>
         <span className={`tag ${s ? "tag-positive" : "tag-warning"}`}>{s ? `Connected · cell ${s.cellId} · ${s.cycle.state}` : "Waiting for participant tab (sign in there)…"}</span>
         {build && <span className="tag tag-info">Version: {build.label}</span>}
+        {channel.current?.usesRelay && <span className="tag tag-info">Two-device mode (study server)</span>}
         {helpNote && <span className="tag tag-warning">Help opened via {helpNote.via}{helpNote.colleague ? ` · talking to ${helpNote.colleague}` : build?.label === "Colleagues" ? " · choosing a colleague" : " · AI"} · {formatTime(helpNote.at)}</span>}
         {!channel.current?.available && channel.current && <span className="tag tag-error">BroadcastChannel unsupported</span>}
       </header>

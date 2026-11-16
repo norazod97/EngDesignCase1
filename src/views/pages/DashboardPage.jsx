@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useAssemblies, useCell, useCellSummary } from "../../controllers/CellController.jsx";
 import { CycleState } from "../../models/cellModel.js";
+import { formatDateTime } from "../../models/job.js";
 import { Icon } from "../components/Icon.jsx";
 import { Button, Card, Tag } from "../components/primitives.jsx";
 import { InspectionModal } from "../modals/InspectionModal.jsx";
@@ -38,6 +39,8 @@ function AssemblyList({ onStart, onOpenWps }) {
               <th scope="col">Weld ID</th>
               <th scope="col">CAD</th>
               <th scope="col">WPS</th>
+              <th scope="col">Received</th>
+              <th scope="col">Due</th>
               <th scope="col">Status</th>
               <th scope="col"><span className="sr-only">Action</span></th>
             </tr>
@@ -64,6 +67,9 @@ function AssemblyList({ onStart, onOpenWps }) {
                 <td data-label="WPS">
                   {a.wps ? <Button variant="ghost" size="sm" icon="file" onClick={() => onOpenWps(a)}>Open PDF</Button> : <Tag tone="error" icon="alert">Missing</Tag>}
                 </td>
+                {/* When the assembly arrived and when it must be finished. */}
+                <td data-label="Received" className="nowrap">{formatDateTime(a.receivedAt)}</td>
+                <td data-label="Due" className="nowrap"><strong>{formatDateTime(a.dueAt)}</strong></td>
                 <td data-label="Status"><Tag tone={STATUS_TONE[a.status]}>{a.statusText}</Tag></td>
                 {/* Start button only on the next assembly, and only when the cell is free
                     (persona check T17: never a greyed-out second primary button). */}
@@ -107,7 +113,7 @@ function CycleCard() {
   if (!active && cycle.state !== CycleState.COMPLETE) return null;
 
   return (
-    <Card title="Now in the cell" icon="robot" className="span-2" tone={cycle.state === CycleState.HALTED ? "error" : undefined}>
+    <Card title="Now in the cell" icon="robot" className="span-2 cycle-card" tone={cycle.state === CycleState.HALTED ? "error" : undefined}>
       <ProcessTracker cycle={cycle} steps={steps} jobName={jobName} />
 
       {/* WAAM repair: its own screens for each step (mount, scan, areas, plan, layers). */}
@@ -171,14 +177,17 @@ function CycleCard() {
 export function DashboardPage() {
   const [starting, setStarting] = useState(null); // the assembly being prepared, or null
   const [wpsJob, setWpsJob] = useState(null); // the assembly whose WPS is open, or null
+  // While an assembly is in the cell, "Now in the cell" fills the centre and the list is hidden.
+  const { active } = useCellSummary();
 
   useEffect(() => { document.title = "Cell dashboard · COROB Weld Cell"; }, []);
 
   return (
     <div className="page">
       <h1 className="page-title">Cell dashboard</h1>
-      <div className="dash-grid">
-        <AssemblyList onStart={setStarting} onOpenWps={setWpsJob} />
+      <div className={`dash-grid ${active ? "is-running" : ""}`}>
+        {/* The assembly list only when nothing is in the cell (choose and start the next one). */}
+        {!active && <AssemblyList onStart={setStarting} onOpenWps={setWpsJob} />}
         <CycleCard />
         <EquipmentWidget />
       </div>

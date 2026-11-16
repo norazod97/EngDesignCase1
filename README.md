@@ -17,7 +17,24 @@ npm run build:colleagues   # one version only, in dist/
 
 Demo accounts: `operator1 / weld123` (GMAW cell), `operator2 / weld456` (WAAM cell) — client-side only, **not secure**.
 
-## Wizard-of-Oz session
+## Two-device session (participant tablet + wizard laptop)
+
+Use this when the participant works on a tablet (or second PC) and you sit at the laptop.
+Everything stays on the lab network; no internet service sees study data.
+
+1. On the laptop: `npm run build`, then `npm run study`. The window shows two addresses, e.g.
+   `http://localhost:8080/` (laptop) and `http://192.168.1.20:8080/` (tablet). Keep this window open.
+2. The first time, Windows asks to allow Node.js on the network: allow it for **private networks**.
+3. Laptop: open `http://localhost:8080/chatbot/#/wizard` (or `/colleagues/`), type the participant code.
+   The header must show **Two-device mode** and, once the tablet is signed in, **Connected**.
+4. Tablet: open `http://<laptop address>:8080/chatbot/` (same version!) and sign in.
+5. Open the wizard **before** the participant signs in, so every log event reaches the laptop.
+   The export on the laptop then contains the participant's events too (the tablet also keeps its own copy).
+
+Network: both devices must be on the same network and allowed to see each other. University Wi-Fi
+(eduroam) often blocks this; use a small router or a phone hotspot that only the two devices join.
+
+## Wizard-of-Oz session (one computer)
 
 1. Open the app and sign in as the participant (e.g. `jack`).
 2. In a **second tab of the same browser**, open `#/wizard` (e.g. `http://localhost:5173/#/wizard`).

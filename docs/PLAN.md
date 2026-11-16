@@ -31,7 +31,7 @@ Each participant does 8 assemblies (4 GMAW, 4 WAAM): no anomaly, welding-process
 - D1: no LLM. The wizard types the AI replies.
 - D2: the alarm flow in section 2.
 - D3: one codebase, folder `src/conditions/` with `chatbot/` and `colleagues/`, two builds.
-- D4: participant and wizard on one laptop with two screens (BroadcastChannel is enough).
+- D4: **DECIDED (16 Nov 2026): two devices.** `npm run study` starts `server/relay.mjs` on the lab laptop: it serves the built app and relays wizard messages over WebSocket (rooms per study version). `wizardChannel.js` uses BroadcastChannel and the relay at the same time, without duplicates; participant log events are copied to the wizard (`storeRemoteEvent`). Data stays on the lab network.
 - D5: **DECIDED (15 Nov 2026): fixed trial order** within each cell: assembly 1 no anomaly, 2 welding process, 3 robot programming, 4 ML defect detection (`trial_order_within_block.mode = "fixed"` in `src/data/study/study-design.json`). Cell order (GMAW first or WAAM first) alternates by participant number; the alarm variant rotates by participant number.
 - Cycle states: only **idle / running / halted**, with a short reason.
 - GMAW has 7 steps: Pick & align → Find the seam → Dry run → Ready to weld (operator) → Weld → AI inspection → Visual NDT (operator). Step ids match `trigger.step` in the alarm files.

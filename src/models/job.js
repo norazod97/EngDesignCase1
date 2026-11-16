@@ -48,6 +48,19 @@ export function formatDateTime(iso) {
   return `${dateFmt.format(d)}, ${timeFmt.format(d)}`;
 }
 
+/**
+ * Short date for the assembly table, e.g. "13/11/25 h 10 AM" or "14/11/25 h 9:30 AM".
+ * Day/month/year (European order), 12-hour clock; minutes only when not :00.
+ */
+export function formatShortDateTime(iso) {
+  const d = new Date(iso);
+  const two = (n) => String(n).padStart(2, "0");
+  const h = d.getHours();
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  const minutes = d.getMinutes() ? `:${two(d.getMinutes())}` : "";
+  return `${two(d.getDate())}/${two(d.getMonth() + 1)}/${two(d.getFullYear() % 100)} h ${hour12}${minutes} ${h < 12 ? "AM" : "PM"}`;
+}
+
 export function formatTime(dateOrIso) {
   return timeFmt.format(new Date(dateOrIso));
 }

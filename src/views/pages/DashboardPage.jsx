@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { useAssemblies, useCell, useCellSummary } from "../../controllers/CellController.jsx";
 import { CycleState } from "../../models/cellModel.js";
-import { formatDateTime } from "../../models/job.js";
+import { formatShortDateTime } from "../../models/job.js";
 import { Icon } from "../components/Icon.jsx";
 import { Button, Card, Tag } from "../components/primitives.jsx";
 import { InspectionModal } from "../modals/InspectionModal.jsx";
@@ -68,8 +68,8 @@ function AssemblyList({ onStart, onOpenWps }) {
                   {a.wps ? <Button variant="ghost" size="sm" icon="file" onClick={() => onOpenWps(a)}>Open PDF</Button> : <Tag tone="error" icon="alert">Missing</Tag>}
                 </td>
                 {/* When the assembly arrived and when it must be finished. */}
-                <td data-label="Received" className="nowrap">{formatDateTime(a.receivedAt)}</td>
-                <td data-label="Due" className="nowrap"><strong>{formatDateTime(a.dueAt)}</strong></td>
+                <td data-label="Received" className="nowrap">{formatShortDateTime(a.receivedAt)}</td>
+                <td data-label="Due" className="nowrap"><strong>{formatShortDateTime(a.dueAt)}</strong></td>
                 <td data-label="Status"><Tag tone={STATUS_TONE[a.status]}>{a.statusText}</Tag></td>
                 {/* Start button only on the next assembly, and only when the cell is free
                     (persona check T17: never a greyed-out second primary button). */}
